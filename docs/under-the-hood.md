@@ -47,7 +47,7 @@ For anyone who wants to know exactly what's touched on the printer. The rules be
 
 ### Valve Oil's Klipper
 
-[Valve Oil's Klipper](klipper.md) is installed on the Max 4 with `01.01.07.01` and the Plus 5 and Smart 5 with `01.01.02.01`. QIDI's `~/klipper` isn't changed.
+[Valve Oil's Klipper](klipper.md) is installed on the Max 4 with `01.01.07.01` and the Plus 5 and Smart 5 with `01.01.02.01`. Its `~/vo-klipper/config` and `~/vo-klipper/docs` contain the matching upstream Klipper examples and documentation exposed by Moonraker. QIDI's `~/klipper` isn't changed.
 
 | What | Change | Restarts |
 |---|---|---|

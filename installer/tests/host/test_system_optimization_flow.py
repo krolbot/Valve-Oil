@@ -1599,6 +1599,13 @@ class SystemOptimizationFlowTests(unittest.TestCase):
                 self.assertTrue(klipper_tree.chelper_newest(tree))
                 self.assertEqual((tree / "klippy/.version").read_text(encoding="utf-8"),
                                  f"v0.14.0-valve-oil-{manifest.package.version}\n")
+                support = {
+                    "config/example-corexy.cfg": "# upstream example corexy config\n",
+                    "docs/Config_Reference.md": "# upstream configuration reference\n",
+                }
+                for relative, content in support.items():
+                    self.assertEqual((tree / relative).read_text(encoding="utf-8"), content)
+                    self.assertIn(relative, marker()["files"])
                 self.assertEqual({key: marker()[key] for key in ("printer", "firmware", "soc")}, {
                     "printer": "plus5", "firmware": "01.01.02.01",
                     "soc": {"version": "01.01.02.01", "file": "QD_PLUS5_SOC_01.01.02.01_Release_NA"}})
@@ -1613,6 +1620,32 @@ class SystemOptimizationFlowTests(unittest.TestCase):
                 installed = marker()
                 self.assertEqual(apply(ledger)["restore_preimages"], ledger["restore_preimages"])
                 self.assertEqual(marker(), installed)
+
+            with self.subTest("update from a tree without the support roots"):
+                legacy = marker()
+                for relative in support:
+                    legacy["files"].pop(relative)
+                for directory in ("config", "docs"):
+                    shutil.rmtree(tree / directory)
+                (tree / klipper_tree.MARKER).write_text(json.dumps(legacy), encoding="utf-8")
+                optimization_spec = manifest.system_optimizations
+                assert optimization_spec is not None
+                tree_spec = optimization_spec.klipper_tree
+                assert tree_spec is not None
+                qidi_modules = tree_spec.modules_for("01.01.02.01")
+                assert qidi_modules is not None
+                expected = klipper_tree.plan(
+                    source=source, printer="plus5", firmware="01.01.02.01", package_version=manifest.package.version,
+                    extra_modules=[(paths.installer_root / module.source, module.destination)
+                                   for module in manifest.install.extra_modules],
+                    qidi_modules=dict(qidi_modules),
+                )
+                self.assertEqual(klipper_tree.state(tree, expected), klipper_tree.OUTDATED)
+                apply(ledger)
+                self.assertEqual(klipper_tree.state(tree, expected), klipper_tree.CURRENT)
+                for relative, content in support.items():
+                    self.assertEqual((tree / relative).read_text(encoding="utf-8"), content)
+                installed = marker()
 
             with self.subTest("a later package replaces the tree; a failure puts the earlier one back"):
                 (source / "klippy/klippy.py").write_text("# a later klippy.py\n", encoding="utf-8")

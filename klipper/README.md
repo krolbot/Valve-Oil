@@ -1,6 +1,6 @@
 # Valve Oil's Klipper
 
-`klippy/` is upstream Klipper v0.14.0 (`c9559fa04`) with QIDI's Max 4 01.01.07.01 Klipper and Valve Oil's fixes on top. `printers/` holds the files that differ on the Plus 5 and Smart 5 (01.01.02.01); see [`printers/README.md`](printers/README.md). Valve Oil installs it beside QIDI's `~/klipper`, which it leaves untouched, and operators choose which one runs (see [`docs/klipper.md`](../docs/klipper.md)).
+`klippy/` is upstream Klipper v0.14.0 (`c9559fa04`) with QIDI's Max 4 01.01.07.01 Klipper and Valve Oil's fixes on top. `printers/` holds the files that differ on the Plus 5 and Smart 5 (01.01.02.01); see [`printers/README.md`](printers/README.md). `config/` and `docs/` are the unmodified upstream v0.14.0 support roots, installed with the runtime so Moonraker exposes matching configuration examples and documentation. Valve Oil installs it beside QIDI's `~/klipper`, which it leaves untouched, and operators choose which one runs (see [`docs/klipper.md`](../docs/klipper.md)).
 
 QIDI's closed modules (`klippy/extras/*.so`) aren't here. The installer copies them from the printer's own `~/klipper` for firmware whose modules were checked against this tree, and uses QIDI's Klipper on any other firmware.
 

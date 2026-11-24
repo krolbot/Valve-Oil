@@ -936,7 +936,7 @@ Normal install and update SHALL install the package's Klipper tree (`klipper/`, 
 
 #### Scenario: The tree is installed for supported firmware
 - **WHEN** install or update runs on firmware listed under `system_optimizations.klipper_tree.qidi_modules` and QIDI's live compiled modules match that list
-- **THEN** it stages the tree with the printer's overlay, every package extra module, copies of QIDI's compiled modules, and the prebuilt C helper library as the newest file in its directory, writes the tree's marker last, and moves it into place, keeping the replaced tree until the host transaction ends
+- **THEN** it stages the tree with the matching upstream Klipper `config/` examples and `docs`, the printer's overlay, every package extra module, copies of QIDI's compiled modules, and the prebuilt C helper library as the newest file in its directory, writes the tree's marker last, and moves it into place, keeping the replaced tree until the host transaction ends
 - **AND** it installs the launcher and the `klipper.service` drop-in that starts Klipper through it
 - **AND** QIDI's `~/klipper` is left unchanged
 

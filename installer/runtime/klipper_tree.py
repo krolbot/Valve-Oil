@@ -58,6 +58,7 @@ QIDI_CHELPER = "chelper/c_helper.so"
 MODULES_REPORT = "vo_klipper_modules.json"
 CHELPER = "klippy/chelper/c_helper.so"
 VERSION_FILE = "klippy/.version"
+SUPPORT_DIRECTORIES = ("config", "docs")
 
 # The launcher klipper.service runs in place of QIDI's command (see vo_klipper_launch.py).
 LAUNCHER_OPERATION = "vo_klipper_launcher"
@@ -178,6 +179,21 @@ def plan(*, source: Path, printer: str, firmware: str, package_version: str,
             if path.is_symlink() or not path.is_file():
                 raise KlipperTreeError(f"Valve Oil's Klipper has an unexpected entry: {relative}")
             files[relative] = path
+    for name in SUPPORT_DIRECTORIES:
+        tree = source / name
+        if tree.is_symlink() or not tree.is_dir():
+            raise KlipperTreeError(f"Valve Oil's Klipper is missing {name}/.")
+        support_files = 0
+        for path in sorted(tree.rglob("*")):
+            relative = path.relative_to(source).as_posix()
+            if "__pycache__" in path.parts or path.suffix == ".pyc" or path.is_dir():
+                continue
+            if path.is_symlink() or not path.is_file():
+                raise KlipperTreeError(f"Valve Oil's Klipper has an unexpected entry: {relative}")
+            files[relative] = path
+            support_files += 1
+        if not support_files:
+            raise KlipperTreeError(f"Valve Oil's Klipper has no {name}/ files.")
     if (source / "COPYING").is_file():
         files["COPYING"] = source / "COPYING"
     for module_source, destination in extra_modules:

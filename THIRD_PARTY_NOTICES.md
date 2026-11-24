@@ -25,7 +25,7 @@ The installer payloads are modified QIDI/Klipper homing sources. `homing.py` was
 
 `installer/system/klipper_chelper/qidi_c_helper.so` is Klipper's C helper library built unmodified from commit `ca815f52c8420225f93f90698768a5c4714654a9`, byte for byte the library QIDI ships. `installer/system/klipper_chelper/c_helper.so` is the same code built with the patches in [`chelper/`](chelper/), backports of later upstream Klipper commits. [`scripts/build_klipper_chelper.py`](scripts/build_klipper_chelper.py) and [`chelper/README.md`](chelper/README.md) hold the steps that rebuild both.
 
-`klipper/` is upstream Klipper v0.14.0 (commit `c9559fa04`) with QIDI's GPL-3.0 Klipper sources for the Max 4 (01.01.07.01), Plus 5 and Smart 5 (01.01.02.01) merged in and modified for Valve Oil from 2026-11-22; [`klipper/README.md`](klipper/README.md) describes the changes. Copyright and licensing notices in its files remain in effect, and `klipper/COPYING` is Klipper's license text.
+`klipper/` is upstream Klipper v0.14.0 (commit `c9559fa04`) with QIDI's GPL-3.0 Klipper sources for the Max 4 (01.01.07.01), Plus 5 and Smart 5 (01.01.02.01) merged in and modified for Valve Oil from 2026-11-22. Its `config/` and `docs/` roots are unmodified copies from that same upstream commit; [`klipper/README.md`](klipper/README.md) describes the changes. Copyright and licensing notices in its files remain in effect, and `klipper/COPYING` is Klipper's license text.
 
 `resonance_sweep.py` adapts the sweeping resonance test from Klipper's `klippy/extras/resonance_tester.py` (Copyright (C) 2020-2024 Dmitry Butyugin) and the junction calculation from `klippy/toolhead.py` (Copyright (C) 2016-2024 Kevin O'Connor) on 2026-11-07, as credited in its header.
 

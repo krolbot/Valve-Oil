@@ -407,6 +407,8 @@ def fake_klipper_tree(system_root: Path, manifest, firmware: str, *, unit: bool 
         "klippy/extras/heaters.py": "# heaters\n",
         "klippy/chelper/__init__.py": "# chelper\n",
         "klippy/chelper/serialqueue.c": "/* serialqueue */\n",
+        "config/example-corexy.cfg": "# upstream example corexy config\n",
+        "docs/Config_Reference.md": "# upstream configuration reference\n",
         "printers/plus5/klippy/extras/heaters.py": "# Plus 5 heaters\n",
         "printers/smart5/klippy/mcu.py": "# Smart 5 mcu\n",
         "COPYING": "GPLv3\n",

@@ -225,18 +225,24 @@ def check_klipper_tree(bundle_root: Path, manifest) -> None:
     source = bundle_root / "klipper"
     if not (source / "klippy/klippy.py").is_file():
         raise SystemExit("bundle smoke test is missing Valve Oil's Klipper")
+    support_files = ("config/example-corexy.cfg", "docs/Config_Reference.md")
+    if any(not (source / relative).is_file() for relative in support_files):
+        raise SystemExit("bundle smoke test is missing Valve Oil Klipper support files")
     library = bundle_root / "installer" / klipper_tree.CHELPER_PAYLOAD_SUBDIR / "c_helper.so"
     if not library.is_file() or klipper_tree.sha256_file(library) != klipper_tree.CHELPER_SHA256:
         raise SystemExit("bundle Klipper C helper library doesn't match installer/runtime/klipper_tree.py")
     for firmware, modules in manifest.system_optimizations.klipper_tree.qidi_modules:
         printer = manifest.printer_for_firmware(firmware)
         try:
-            klipper_tree.plan(
+            tree = klipper_tree.plan(
                 source=source, printer=printer.id, firmware=firmware, package_version=manifest.package.version,
                 extra_modules=[(bundle_root / "installer" / module.source, module.destination)
                                for module in manifest.install.extra_modules],
                 qidi_modules=dict(modules),
             )
+            expected = tree.expected()
+            if any(expected.get(relative) != klipper_tree.sha256_file(source / relative) for relative in support_files):
+                raise SystemExit("bundle Klipper tree omits its support files")
         except klipper_tree.KlipperTreeError as exc:
             raise SystemExit(f"bundle Valve Oil's Klipper for {firmware}: {exc.message}") from exc
 
