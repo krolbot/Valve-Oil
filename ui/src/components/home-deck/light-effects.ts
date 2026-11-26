@@ -56,6 +56,8 @@ export const rgbHex = (c: readonly number[]) => '#' + c.map((v) => Math.round(v)
 export const effectPeriod = (effect: string, speed: Speed) => (effectDef(effect)?.period ?? 0) * SPEED_FACTOR[speed]
 
 // ---- the preview: an approximation of each effect on n LEDs at time t (ms) ----
+// Drawn as seen from the printer's front. QIDI's DIR=1, the default, runs the comet right to left (Max 4, 2026-11-26);
+// flow and rainbow are drawn the same way.
 function hsl(h: number): number[] {
   h = ((h % 360) + 360) % 360
   const f = (n: number) => {
@@ -80,14 +82,14 @@ export function previewColor(effect: string, i: number, n: number, t: number, rg
     case 'breathe':
       return col(0.06 + 0.94 * (0.5 - 0.5 * Math.cos(2 * Math.PI * ph)))
     case 'flow': {
-      const x = i / n + (direction ? -ph : ph)
+      const x = i / n + (direction ? ph : -ph)
       return col(0.12 + 0.88 * Math.pow((Math.sin(2 * Math.PI * x) + 1) / 2, 2))
     }
     case 'rainbow':
-      return hsl((i / n) * 360 + (direction ? -1 : 1) * ph * 360).map((v) => v * b)
+      return hsl((i / n) * 360 + (direction ? 1 : -1) * ph * 360).map((v) => v * b)
     case 'comet': {
       const tail = Math.max(3, n * 0.35)
-      const d = ph * (n + tail) - 1 - (direction ? i : n - 1 - i)
+      const d = ph * (n + tail) - 1 - (direction ? n - 1 - i : i)
       return d < 0 || d > tail ? col(dim) : col(Math.pow(1 - d / tail, 1.6))
     }
     case 'spread': {
