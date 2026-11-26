@@ -2,6 +2,8 @@
 
 ## 26.11.26.1
 - Valve Oil UI's Toolhead card now says the move steps are in millimetres, on the **Step** heading beside Fine, Coarse, and Turbo. The wheel, the Z buttons, and the step buttons showed bare numbers.
+- **Report a problem**, in Valve Oil UI's Updates screen and Fluidd's **Settings → Valve Oil**, now downloads the support bundle first and shows the next steps before it opens GitHub. Once the bundle is saved, the window gives its file name and says to drag it into the issue's **Logs and files**, and **Open the issue on GitHub** opens the form. The form used to open first, with the download landing behind it, and reports kept arriving without the bundle.
+- The bug report form that **Report a problem** opens, from Valve Oil UI or Fluidd, now leaves **Logs and files** empty. The printer filled it in with a note about the bundle, which let the form be submitted without the bundle attached. The field is required, so GitHub now asks for something in it before the issue is submitted.
 
 ## 26.11.25.1
 - With Valve Oil's Klipper chosen, the Max 4's X/Y homing guard works again. Valve Oil's Klipper names the X and Y endstops `stepper_x` and `stepper_y` where QIDI's Klipper names them `x` and `y`, and the guard only knew QIDI's names, so it watched no homing move at all. When the closed-loop driver missed the end of the axis, nothing stopped the toolhead: on a Max 4 homing X at print start, it drove into the right side of the frame until the homing move ran out, about 6 seconds, and the belt skipped. The guard now stops such a move within about 7 mm, backs off, and homes again, as it does on QIDI's Klipper. See [X/Y homing grinding into the frame](docs/fixes.md#xy-homing-grinding-into-the-frame).

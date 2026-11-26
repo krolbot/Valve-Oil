@@ -1,0 +1,35 @@
+name: Support Bundle Reminder
+
+# Asks for the valve-oil-support zip on bug reports that don't have it, and takes the request back once it's attached.
+# The rules are in scripts/support_bundle_reminder.py.
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  issues: write
+
+# One run per issue at a time, so the opened and labeled events of a new issue don't both post a reminder.
+concurrency:
+  group: support-bundle-reminder-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  remind:
+    if: ${{ !github.event.issue.pull_request && github.event.issue.state == 'open' && (github.event.action != 'labeled' || github.event.label.name == 'bug') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: scripts/support_bundle_reminder.py
+          sparse-checkout-cone-mode: false
+
+      - name: Ask for the support bundle, or take the request back
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/support_bundle_reminder.py

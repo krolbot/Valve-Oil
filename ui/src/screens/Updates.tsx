@@ -5,6 +5,7 @@ import { LanOnly } from '../components/settings/LanOnly'
 import { JobView, RunningBox } from '../components/settings/Addons'
 import { fmtDateTime, fmtTime, PendingToggleRow } from '../components/settings/common'
 import { InstallStepsCard, InstallerLogsCard } from '../components/updates/Install'
+import { ReportRow } from '../components/updates/Report'
 import { UninstallRow } from '../components/updates/Uninstall'
 import { client } from '../state/printer'
 import {
@@ -27,13 +28,11 @@ import {
 import {
   autoUpdateDisabled,
   clearAutoUpdateError,
-  clearSupportError,
   clearUpdateNowError,
   clearWindowError,
   dismissUpdate,
   reconnecting,
   reconnectingLongMinutes,
-  reportProblem,
   setAutoUpdate,
   setUpdateWindow,
   shownUpdate,
@@ -397,26 +396,7 @@ function ValveOilCard({ s, view }: { s: ValveOilState; view: VoStatusView }) {
         {update && <UpdateProgress update={update} recoveryRequired={recoveryRequired} />}
       </div>
 
-      {view.supportIssueUrl && (
-        <>
-          <div className="sep my-2" />
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 py-1">
-            <div className="min-w-[180px] flex-1">
-              <div className="font-medium">{t('updates.card.report')}</div>
-              <div className="text-[12.5px] text-ink-3">{t('updates.card.report_sub')}</div>
-            </div>
-            <button className="btn btn-sm ml-auto" disabled={s.supportPending} onClick={reportProblem}>
-              {s.supportPending ? <LoaderCircle size={13} className="spin" /> : <ExternalLink size={13} />}
-              {t('updates.card.open_issue')}
-            </button>
-          </div>
-          {s.supportError && (
-            <Notice tone="bad" onClose={clearSupportError}>
-              {t('updates.card.support_error', { error: s.supportError })}
-            </Notice>
-          )}
-        </>
-      )}
+      {view.supportIssueUrl && <ReportRow s={s} />}
 
       <UninstallRow s={s} />
 
