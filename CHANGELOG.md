@@ -1,7 +1,7 @@
 # Changelog
 
 ## 26.11.26.1
-- **Report a problem** in Valve Oil UI now downloads the support bundle first and shows the next steps before it opens GitHub. Once the bundle is saved, the window gives its file name and says to drag it into the issue's **Logs and files**, and **Open the issue on GitHub** opens the form. The form used to open first, with the download landing behind it, and reports kept arriving without the bundle.
+- **Report a problem**, in Valve Oil UI's Updates screen and Fluidd's **Settings → Valve Oil**, now downloads the support bundle first and shows the next steps before it opens GitHub. Once the bundle is saved, the window gives its file name and says to drag it into the issue's **Logs and files**, and **Open the issue on GitHub** opens the form. The form used to open first, with the download landing behind it, and reports kept arriving without the bundle.
 - The bug report form that **Report a problem** opens, from Valve Oil UI or Fluidd, now leaves **Logs and files** empty. The printer filled it in with a note about the bundle, which let the form be submitted without the bundle attached. The field is required, so GitHub now asks for something in it before the issue is submitted.
 
 ## 26.11.25.1
