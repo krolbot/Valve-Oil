@@ -1,5 +1,8 @@
 # Changelog
 
+## 26.11.25.1
+- With Valve Oil's Klipper chosen, the Max 4's X/Y homing guard works again. Valve Oil's Klipper names the X and Y endstops `stepper_x` and `stepper_y` where QIDI's Klipper names them `x` and `y`, and the guard only knew QIDI's names, so it watched no homing move at all. When the closed-loop driver missed the end of the axis, nothing stopped the toolhead: on a Max 4 homing X at print start, it drove into the right side of the frame until the homing move ran out, about 6 seconds, and the belt skipped. The guard now stops such a move within about 7 mm, backs off, and homes again, as it does on QIDI's Klipper. See [X/Y homing grinding into the frame](docs/fixes.md#xy-homing-grinding-into-the-frame).
+
 ## 26.11.23.3
 - On the Plus 5 and Smart 5, the extruder motor now runs at 0.6 A instead of QIDI's 0.857 A. At 0.857 A the Plus 5's driver on the toolhead board ran hot enough in a hot chamber for Fluidd to warn that it was overheating (issue #417). The Max 4 runs the same extruder gearing at 0.428 A, and Plus 5 Box loads and unloads ran without slipping at 0.428 A.
 - Box unloads and ejects started from QIDI's touchscreen, or from the console without `COLD`, now run without heating the nozzle between prints, as **Unload** and **Eject** in Valve Oil UI and Fluidd already did. QIDI's touchscreen never asks for a cold unload, so its unloads heated the nozzle to the top of the filament's range, 280 °C for some filaments. `COLD=0` heats as QIDI does. The external spool's unload, and unloads during a print, still heat. See [Unloading and ejecting cold](docs/qidi-box.md#unloading-and-ejecting-cold).

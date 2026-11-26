@@ -173,6 +173,22 @@ class HomingGuardTest(unittest.TestCase):
         # only the other driver is asked.
         self.assertEqual(set(printer.cl.sent), {bytes([0xfa, 3, 0x39, 0x36])})
 
+    def test_valve_oil_klipper_endstop_names_are_watched(self) -> None:
+        # Klipper v0.14 names the X/Y endstops after the stepper. On
+        # 2026-11-26 a Max 4 on Valve Oil's Klipper drove X into the frame
+        # with the guard idle, because it only knew QIDI's "x" and "y".
+        for name, driver in (("stepper_x", "y"), ("stepper_y", "x")):
+            printer = GuardPrinter()
+            endstop = printer.begin(name)
+            for value in (1024, 1100, 3000, 1024 + 8 * CYCLE):
+                self.assertTrue(printer.read(driver, value))
+            self.assertEqual(endstop.trsync._trsync_trigger_cmd.sent,
+                             [[7, Trsync.REASON_HOST_REQUEST]])
+            printer.end()
+            message, retry = printer.guard.take_stop()
+            self.assertTrue(retry)
+            self.assertIn("Stopped homing %s" % name[-1].upper(), message)
+
     def test_touch_ending_normally_changes_nothing(self) -> None:
         printer = GuardPrinter()
         endstop = printer.begin("y")

@@ -95,6 +95,13 @@ def parse_reply(data):
     return int.from_bytes(data[3:7], "big", signed=True)
 
 
+def _axis_name(endstop_name):
+    """The axis of an X/Y endstop name: QIDI's Klipper names the endstop "x",
+    Valve Oil's Klipper (v0.14) names it after the stepper, "stepper_x"."""
+    name = str(endstop_name)
+    return name[8:] if name.startswith("stepper_") else name
+
+
 def _trsyncs(mcu_endstop):
     """The trsyncs that stop this endstop's homing move, or None."""
     # QIDI's homing code allows for an endstop object that wraps the MCU's.
@@ -223,9 +230,12 @@ class HomingGuard:
         if self.cl is None or not self._enabled():
             return
         endstops = getattr(hmove, "endstops", None) or []
-        if len(endstops) != 1 or endstops[0][1] not in STEPPERS:
+        if len(endstops) != 1:
             return
         mcu_endstop, name = endstops[0]
+        name = _axis_name(name)
+        if name not in STEPPERS:
+            return
         trsyncs = _trsyncs(mcu_endstop)
         if trsyncs is None:
             if not self.warned_no_trsync:
