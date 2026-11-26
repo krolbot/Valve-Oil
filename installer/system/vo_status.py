@@ -169,10 +169,7 @@ MAX_ISSUE_URL = 8000
 # The support issue: the bug report form (.github/ISSUE_TEMPLATE/bug-report.yml), whose printer choices these are.
 SUPPORT_ISSUE_TEMPLATE = "bug-report.yml"
 SUPPORT_ISSUE_PRINTERS = ("QIDI Max 4", "QIDI Plus 5", "QIDI Smart 5")
-SUPPORT_ISSUE_LOGS = (
-    "Opening this issue downloaded valve-oil-support-....zip to your browser's downloads folder. Drag that file in "
-    "here: it has klippy.log, moonraker.log, and Valve Oil's reports."
-)
+# Logs and files is left empty: it's required, so the form isn't sent until the bundle (or something) is dragged in.
 INSTALL_SOURCES = {"release": "Release install command from the README", "dev": "Dev prerelease"}
 # Valve Oil's Klipper. The launcher in front of klipper.service starts the Klipper the choice file names, records each
 # start in the status file, and waits for the ready acknowledgement Valve Oil's Klipper extra (vo_klipper) writes.
@@ -911,7 +908,6 @@ def support_issue_url(status: dict) -> str:
     if status["release"]["channel"] in INSTALL_SOURCES:
         fields["install_source"] = INSTALL_SOURCES[status["release"]["channel"]]
     fields["printer_details"] = printer_details(status)
-    fields["logs"] = SUPPORT_ISSUE_LOGS
     url = ISSUE_URL_PREFIX + urllib.parse.urlencode(fields, quote_via=urllib.parse.quote)
     if len(url) > MAX_ISSUE_URL:
         del fields["printer_details"]

@@ -28,7 +28,7 @@
     "check_failed": "La última búsqueda de actualizaciones falló.",
     "check_failed_message": "La última búsqueda de actualizaciones falló: {{message}}",
     "report": "Informar de un problema",
-    "report_sub": "Abre un informe de error en GitHub y descarga un paquete de soporte con los registros de Klipper, Moonraker y Valve Oil. Adjunta el paquete a la incidencia.",
+    "report_sub": "Descarga un paquete de soporte con los registros de Klipper, Moonraker y Valve Oil y luego abre un informe de error en GitHub para adjuntarlo.",
     "open_issue": "Abrir una incidencia",
     "support_error": "No se pudo descargar el paquete de soporte: {{error}}",
     "last_checked": "Última búsqueda de actualizaciones: {{time}}",
@@ -249,5 +249,17 @@
       "firmware_update_pending": "Una actualización de firmware de QIDI no terminó. Termínala primero con Actualizar ahora.",
       "installer_missing": "Falta el instalador de Valve Oil en la impresora. Desinstala por SSH."
     }
+  },
+  "report": {
+    "title": "Informar de un problema",
+    "needed": "Los informes de error necesitan el paquete de soporte. Sin él, la mayoría de los problemas no se pueden rastrear.",
+    "downloading": "Descargando el paquete de soporte…",
+    "saved": "{{name}} se guardó en la carpeta de descargas de este navegador.",
+    "open_step": "Abre la incidencia en GitHub. La impresora y sus datos ya están rellenados.",
+    "attach": "Arrastra el zip a <b>Logs and files</b> antes de enviar la incidencia.",
+    "reminder": "Los informes sin él reciben un recordatorio automático hasta que se adjunta.",
+    "again": "Descargar de nuevo",
+    "retry": "Reintentar",
+    "open": "Abrir la incidencia en GitHub"
   }
 }

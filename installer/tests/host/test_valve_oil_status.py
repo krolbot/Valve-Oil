@@ -549,7 +549,7 @@ class StatusServiceTests(unittest.TestCase):
 
     def test_dev_builds_and_the_support_bundle(self) -> None:
         """A dev build says so, for the UIs to leave out its failing update check; the support issue links only to
-        this project's form; the bundle holds the newest part of each log and is only fetched."""
+        this project's form and leaves Logs and files for the bundle; the bundle holds the newest part of each log and is only fetched."""
         metadata = self.server.RELEASE_METADATA
         logs = self.server.LOGS
         logs.mkdir(exist_ok=True)
@@ -565,6 +565,8 @@ class StatusServiceTests(unittest.TestCase):
             self.assertEqual((query["template"], query["printer"], query["install_source"]),
                              (["bug-report.yml"], ["QIDI Max 4"], ["Dev prerelease"]))
             self.assertIn("Valve Oil: 26.11.11.3 (dev build a8dda52)", query["printer_details"][0])
+            # Filled in, the required Logs and files let issues be sent without the bundle (#410, #426).
+            self.assertNotIn("logs", query)
             # The bundle in ~/valve-oil is for another version: what installed the installed release isn't known.
             metadata.write_text('package_version: "26.11.15.1"\nchannel: "dev"\n')
             self.assertEqual(self.request("/api/status", method="GET")[1]["release"]["channel"], None)
