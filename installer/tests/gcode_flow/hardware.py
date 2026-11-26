@@ -673,10 +673,15 @@ class OutputPin:
 
 
 class Led:
+    """A neopixel. QIDI's module (klipper/klippy/extras/neopixel.py) adds NEOPIXEL_MODE and NEOPIXEL_ENABLE for the
+    effects the main board runs; both are recorded on the printer's trace and do nothing else here."""
+
     def __init__(self, config):
         self.color = [[0., 0., 0., 0.]]
-        config.get_printer().lookup_object("gcode").register_mux_command(
-            "SET_LED", "LED", config.get_name().split()[-1], lambda gcmd: None)
+        gcode = config.get_printer().lookup_object("gcode")
+        gcode.register_mux_command("SET_LED", "LED", config.get_name().split()[-1], lambda gcmd: None)
+        for command in ("NEOPIXEL_MODE", "NEOPIXEL_ENABLE"):
+            gcode.register_command(command, lambda gcmd: None)
 
     def get_status(self, eventtime):
         return {"color_data": self.color}

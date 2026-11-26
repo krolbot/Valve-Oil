@@ -139,5 +139,28 @@
     "power": "мощность {{pct}}%",
     "target_hint": "Введите цель для «{{name}}» и нажмите Enter. 0 выключает нагрев.",
     "fan_title": "{{name}}: вентилятор {{pct}}%, цель {{target}}°"
+  },
+  "outputs": {
+    "tab_fans": "Вентиляторы",
+    "tab_lights": "Управление светом",
+    "fans_off": "Выключить вентиляторы",
+    "klipper_runs": "Ими управляет Klipper",
+    "case_light": "Подсветка камеры",
+    "effect_named": "Эффект {{name}}",
+    "effect_status": "Статус принтера",
+    "effect_solid": "Ровный",
+    "effect_breathe": "Дыхание",
+    "effect_flow": "Поток",
+    "effect_rainbow": "Радуга",
+    "effect_comet": "Комета",
+    "effect_spread": "Из центра",
+    "effect_flash": "Мигание",
+    "status_note": "Индикатор состояния QIDI. В простое он «дышит», а во время печати заполняется по ходу печати. Другой эффект заменяет его, пока вы снова не выберете «Статус принтера».",
+    "color": "Цвет",
+    "speed": "Скорость",
+    "speed_slow": "Медленно",
+    "speed_normal": "Обычно",
+    "speed_fast": "Быстро",
+    "reverse": "Реверс"
   }
 }

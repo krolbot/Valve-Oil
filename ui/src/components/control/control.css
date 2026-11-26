@@ -36,3 +36,6 @@
 /* Swatches for picking an LED color. */
 .led-swatch { width: 28px; height: 28px; border-radius: 8px; border: 0; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25), 0 0 0 1px var(--line); }
 .led-swatch.on { box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25), 0 0 0 2px var(--accent); }
+/* A slider's value as a button that opens its presets. */
+.slider-value { width: 52px; flex: none; justify-content: flex-end; border: 0; background: none; padding: 2px 4px; border-radius: 6px; text-align: right; font-weight: 600; display: inline-flex; }
+.slider-value:hover { background: var(--hover); }

@@ -139,5 +139,28 @@
     "power": "{{pct}}% de potencia",
     "target_hint": "Escribe un objetivo para {{name}} y pulsa Enter. 0 lo apaga.",
     "fan_title": "{{name}}: ventilador {{pct}}%, objetivo {{target}}°"
+  },
+  "outputs": {
+    "tab_fans": "Ventiladores",
+    "tab_lights": "Control de luces",
+    "fans_off": "Apagar ventiladores",
+    "klipper_runs": "Los controla Klipper",
+    "case_light": "Luz interior",
+    "effect_named": "Efecto de {{name}}",
+    "effect_status": "Estado de la impresora",
+    "effect_solid": "Fijo",
+    "effect_breathe": "Respiración",
+    "effect_flow": "Flujo",
+    "effect_rainbow": "Arcoíris",
+    "effect_comet": "Cometa",
+    "effect_spread": "Expansión",
+    "effect_flash": "Destello",
+    "status_note": "La luz de estado de QIDI. Respira en reposo y se llena con el progreso de la impresión. Otro efecto la sustituye hasta que vuelvas a elegir Estado de la impresora.",
+    "color": "Color",
+    "speed": "Velocidad",
+    "speed_slow": "Lenta",
+    "speed_normal": "Normal",
+    "speed_fast": "Rápida",
+    "reverse": "Invertir"
   }
 }

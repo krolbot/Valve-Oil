@@ -160,7 +160,8 @@
     "brightness": "Brightness",
     "brightness_named": "{{name}} brightness",
     "white": "White",
-    "white_named": "{{name}} white"
+    "white_named": "{{name}} white",
+    "presets_named": "{{name}} presets"
   },
   "macros": {
     "all_hidden": "Every macro is hidden. Use Organize to show some.",

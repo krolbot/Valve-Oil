@@ -1,13 +1,10 @@
 // The Home control deck: the jog wheel, step sizes, temperature actions, outputs, and macros for the Home mockup.
 import { useState } from 'react'
-import { ChevronDown, Fan, House, Settings2, Snowflake, Zap } from 'lucide-react'
+import { ChevronDown, House, Settings2, Snowflake, Zap } from 'lucide-react'
 import { MenuButton, Segmented } from '../ui'
-import { objectLabel } from '../control/common'
-import { FAN_TYPES, FanRow, LED_TYPES, LedRow, PIN_TYPES, PinRow, QIDI_FAN_ORDER, nameOf, typeOf, useOutputs } from '../control/Outputs'
 import { MacroButton, MacrosActions, useMacros, useMacrosDb } from '../control/Macros'
 import { macroGroups } from '../control/macro-settings'
 import { attempt } from '../toast'
-import { usePrinter } from '../../state/printer'
 import { applyPreset, usePresets } from '../../state/presets'
 import { navigate } from '../../lib/router'
 import { useStored } from '../../lib/browser'
@@ -138,52 +135,6 @@ export function TempActions() {
         <Snowflake size={12} /> {t('control.temps.cool_down')}
       </button>
     </>
-  )
-}
-
-// ---- fans, pins, and lights ----
-export function OutputsDeck() {
-  const fans = useOutputs(FAN_TYPES)
-  const pins = useOutputs(PIN_TYPES)
-  const leds = useOutputs(LED_TYPES)
-  const rank = (o: string) => (QIDI_FAN_ORDER.includes(nameOf(o)) ? QIDI_FAN_ORDER.indexOf(nameOf(o)) : 99)
-  const settable = fans.filter((o) => ['fan', 'fan_generic'].includes(typeOf(o))).sort((a, b) => rank(a) - rank(b))
-  const auto = fans.filter((o) => !settable.includes(o) && typeOf(o) !== 'temperature_fan')
-  return (
-    <section className="card">
-      <h3 className="card-title">
-        <Fan size={14} /> {t('control.screen.tab_outputs')}
-      </h3>
-      <div className="grid gap-2.5">
-        {settable.map((o) => (
-          <FanRow key={o} obj={o} inline />
-        ))}
-        {pins.map((o) => (
-          <PinRow key={o} obj={o} />
-        ))}
-        {leds.map((o) => (
-          <LedRow key={o} obj={o} />
-        ))}
-        {auto.length > 0 && (
-          <div className="deck-sec mt-1! pt-2!">
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
-              {auto.map((o) => (
-                <AutoFan key={o} obj={o} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
-  )
-}
-
-function AutoFan({ obj }: { obj: string }) {
-  const speed = usePrinter((s) => (s.status[obj]?.speed as number | undefined) ?? 0)
-  return (
-    <span>
-      <span className="text-ink-3">{objectLabel(obj)}</span> <b className={`num ${speed > 0 ? 'text-accent-ink' : 'text-ink-3'}`}>{speed > 0 ? `${Math.round(speed * 100)}%` : t('app.temps.off')}</b>
-    </span>
   )
 }
 

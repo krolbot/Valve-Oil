@@ -216,7 +216,7 @@ function TemperatureFansCard() {
   )
 }
 
-function TemperatureFanRow({ obj }: { obj: string }) {
+export function TemperatureFanRow({ obj }: { obj: string }) {
   const st = usePrinter((s) => s.status[obj] ?? {})
   const cfg = usePrinter((s) => s.settings[obj.toLowerCase()] as HeaterConfig | undefined)
   const target = (st.target as number | undefined) ?? 0
