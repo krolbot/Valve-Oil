@@ -135,7 +135,9 @@ function MoveBody({ homed, free, onFree }: { homed: string; free: boolean; onFre
     <div className="grid gap-3">
       <div className={`th-move ${free ? 'free' : ''}`}>
         <div className="steprock" role="group" aria-label={t('home.toolhead.step_size')}>
-          <span className="cap">{t('control.z_offset.step')}</span>
+          <span className="cap">
+            {t('control.z_offset.step')} <span className="unit">mm</span>
+          </span>
           {(Object.keys(MODES) as Mode[]).map((m) => (
             <button key={m} type="button" aria-pressed={mode === m} className={mode === m ? 'on' : ''} onClick={() => setMode(m)} title={t('home.toolhead.mode_title', { mode: t(MODES[m].labelKey), small: MODES[m].small, big: MODES[m].big })}>
               <b>{t(MODES[m].labelKey)}</b>

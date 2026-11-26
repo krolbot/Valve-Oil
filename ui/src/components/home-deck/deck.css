@@ -71,6 +71,7 @@
 .th-move .jw { max-width: 280px; justify-self: center; }
 .zrock { display: flex; flex-direction: column; gap: 2px; align-self: stretch; justify-content: center; }
 .zrock .cap, .steprock .cap { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); text-align: center; padding: 2px 0; }
+.steprock .cap .unit { text-transform: none; letter-spacing: 0; font-weight: 600; }
 .zrock button { display: flex; align-items: center; justify-content: center; gap: 3px; height: 34px; border: 0; background: var(--inset); color: var(--ink-2); font-size: 12px; font-weight: 700; }
 .zrock button:nth-of-type(1) { border-radius: 10px 10px 3px 3px; }
 .zrock button:nth-of-type(5) { border-radius: 3px 3px 10px 10px; }
