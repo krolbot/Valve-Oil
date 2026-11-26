@@ -28,7 +28,7 @@
     "check_failed": "The last check for updates failed.",
     "check_failed_message": "The last check for updates failed: {{message}}",
     "report": "Report a problem",
-    "report_sub": "Opens a bug report on GitHub and downloads a support bundle with Klipper's, Moonraker's, and Valve Oil's logs. Attach the bundle to the issue.",
+    "report_sub": "Downloads a support bundle with Klipper's, Moonraker's, and Valve Oil's logs, then opens a bug report on GitHub to attach it to.",
     "open_issue": "Open an issue",
     "support_error": "The support bundle couldn't be downloaded: {{error}}",
     "last_checked": "Last checked for updates {{time}}",
@@ -249,5 +249,17 @@
       "firmware_update_pending": "A QIDI firmware update hasn't finished. Finish it with Update now first.",
       "installer_missing": "Valve Oil's installer is missing from the printer. Uninstall over SSH instead."
     }
+  },
+  "report": {
+    "title": "Report a problem",
+    "needed": "Bug reports need the support bundle. Without it, most problems can't be tracked down.",
+    "downloading": "Downloading the support bundle…",
+    "saved": "Saved {{name}} to this browser's downloads folder.",
+    "open_step": "Open the issue on GitHub. The printer and its details are already filled in.",
+    "attach": "Drag the zip into <b>Logs and files</b> before you submit the issue.",
+    "reminder": "Reports without it get an automatic reminder until it's attached.",
+    "again": "Download again",
+    "retry": "Try again",
+    "open": "Open the issue on GitHub"
   }
 }

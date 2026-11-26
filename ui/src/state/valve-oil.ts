@@ -57,6 +57,8 @@ export type ValveOilState = {
   dismissed: string[]
   supportPending: boolean
   supportError: string
+  /** The file name the last support bundle was saved under; empty until one is. */
+  supportBundleName: string
   /** The Klipper a switch is being asked for. */
   klipperRequest: VoKlipperTree | null
   klipperError: string
@@ -121,6 +123,7 @@ export const valveOil = createStore<ValveOilState>({
   updateNowBlockedBy: [],
   dismissed: loadDismissed(),
   supportPending: false,
+  supportBundleName: '',
   supportError: '',
   klipperRequest: null,
   klipperError: '',
@@ -322,10 +325,11 @@ export function dismissUpdate(id: string) {
 }
 
 async function saveSupportBundle(base: string) {
-  patch({ supportPending: true, supportError: '' })
+  patch({ supportPending: true, supportError: '', supportBundleName: '' })
   try {
     const { blob, name } = await voSupportBundle(base)
     saveBlob(blob, name)
+    patch({ supportBundleName: name })
   } catch (e) {
     patch({ supportError: errorText(e) })
   } finally {
@@ -334,19 +338,16 @@ async function saveSupportBundle(base: string) {
 }
 
 /**
- * Opens the prefilled issue, then downloads the support bundle to attach to it. The issue opens first, while the click
- * still lets this page open a tab.
+ * Opens the prefilled issue in a new tab. Called from a click, which is what lets this page open one; Report a problem
+ * downloads the bundle first, so it's in the downloads folder before the form is.
  */
-export async function reportProblem() {
+export function openSupportIssue() {
   const s = valveOil.get()
   const url = s.status ? voStatusView(s.status).supportIssueUrl : null
-  const base = apiBase()
-  if (!url || !base || s.supportPending) return
-  window.open(url, '_blank', 'noopener,noreferrer')
-  await saveSupportBundle(base)
+  if (url) window.open(url, '_blank', 'noopener,noreferrer')
 }
 
-/** Downloads the support bundle without opening an issue: for the System screen's Diagnostics check. */
+/** Downloads the support bundle: for Report a problem, before its issue opens, and the System screen's Diagnostics check. */
 export async function downloadSupportBundle() {
   const base = apiBase()
   if (!base || valveOil.get().supportPending) return
