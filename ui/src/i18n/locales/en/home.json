@@ -114,7 +114,6 @@
     "bed_down": "Bed down",
     "bed_up": "Bed up",
     "z_plus": "Z+ {{step}} mm: the bed moves down",
-    "z_plus_capped": "Z+ {{step}} mm: the bed moves down. Z steps stop at {{max}} mm.",
     "z_minus": "Z− {{step}} mm: the bed moves up",
     "wait_last": "Wait for the printer to finish the last command.",
     "unhomed_confirm_title": "Move without homing?",

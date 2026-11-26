@@ -114,7 +114,6 @@
     "bed_down": "Cama abajo",
     "bed_up": "Cama arriba",
     "z_plus": "Z+ {{step}} mm: la cama baja",
-    "z_plus_capped": "Z+ {{step}} mm: la cama baja. Los pasos en Z son de {{max}} mm como máximo.",
     "z_minus": "Z− {{step}} mm: la cama sube",
     "wait_last": "Espera a que la impresora termine el último comando.",
     "unhomed_confirm_title": "¿Mover sin homing?",

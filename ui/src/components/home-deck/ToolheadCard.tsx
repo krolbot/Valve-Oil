@@ -6,7 +6,7 @@ import { MenuButton, Stepper, confirm } from '../ui'
 import { NumberInput, Slider, jog as jogAxis, send, useHomedAxes, usePercent, useZOffset } from '../control/common'
 import { usePrinting } from '../../state/job'
 import { extrudeGcode, gcode, moveGcode } from '../control/gcode'
-import { Z_SPEED, Z_STEPS, Z_STEP_MAX, axisSpeed, useClientMacro, useSteppersOn, useToolItems } from '../control/Move'
+import { Z_SPEED, Z_STEPS, axisSpeed, useClientMacro, useSteppersOn, useToolItems } from '../control/Move'
 import { BoxTools } from '../box/BoxTools'
 import { printer, useHasCommand, usePrinter } from '../../state/printer'
 import { useUiSetting } from '../settings/fluidd'
@@ -122,7 +122,6 @@ function MoveBody({ homed, free, onFree }: { homed: string; free: boolean; onFre
   const canFree = useHasCommand('SET_KINEMATIC_POSITION')
   const steppersOn = useSteppersOn()
   const can = (a: string) => !printing && (homed.includes(a) || free)
-  const zBig = Math.min(big, Z_STEP_MAX)
   // A homed axis jogs as usual, inside its limits; an unhomed one moves only with "Move without homing" on.
   const move = (axis: 'X' | 'Y' | 'Z', d: number) => (homed.includes(axis.toLowerCase()) ? jogAxis(axis, d, axisSpeed(axis), clientMacro) : unhomedMove(axis, d))
   const zHot = free && !homed.includes('z') ? 'hot' : ''
@@ -135,7 +134,9 @@ function MoveBody({ homed, free, onFree }: { homed: string; free: boolean; onFre
     <div className="grid gap-3">
       <div className={`th-move ${free ? 'free' : ''}`}>
         <div className="steprock" role="group" aria-label={t('home.toolhead.step_size')}>
-          <span className="cap">{t('control.z_offset.step')}</span>
+          <span className="cap">
+            {t('control.z_offset.step')} <span className="unit">mm</span>
+          </span>
           {(Object.keys(MODES) as Mode[]).map((m) => (
             <button key={m} type="button" aria-pressed={mode === m} className={mode === m ? 'on' : ''} onClick={() => setMode(m)} title={t('home.toolhead.mode_title', { mode: t(MODES[m].labelKey), small: MODES[m].small, big: MODES[m].big })}>
               <b>{t(MODES[m].labelKey)}</b>
@@ -172,13 +173,13 @@ function MoveBody({ homed, free, onFree }: { homed: string; free: boolean; onFre
         <JogWheel small={small} big={big} canX={can('x')} canY={can('y')} canHome={!printing} onJog={move} onHome={() => tracked('G28 X Y')} hotX={free && !homed.includes('x')} hotY={free && !homed.includes('y')} />
         <div className="zrock" role="group" aria-label={t('control.toolhead.move_z')}>
           <span className="cap">{t('home.toolhead.bed_down')}</span>
-          {jogZ(zBig, <ChevronsUp size={15} />, big > Z_STEP_MAX ? t('home.toolhead.z_plus_capped', { step: zBig, max: Z_STEP_MAX }) : t('home.toolhead.z_plus', { step: zBig }))}
+          {jogZ(big, <ChevronsUp size={15} />, t('home.toolhead.z_plus', { step: big }))}
           {jogZ(small, <ArrowUp size={14} />, t('home.toolhead.z_plus', { step: small }))}
           <button className="home" disabled={printing} onClick={() => tracked('G28 Z')} title={t('control.toolhead.home_z')}>
             <House size={14} /> Z
           </button>
           {jogZ(-small, <ArrowDown size={14} />, t('home.toolhead.z_minus', { step: small }))}
-          {jogZ(-zBig, <ChevronsDown size={15} />, t('home.toolhead.z_minus', { step: zBig }))}
+          {jogZ(-big, <ChevronsDown size={15} />, t('home.toolhead.z_minus', { step: big }))}
           <span className="cap">{t('home.toolhead.bed_up')}</span>
         </div>
       </div>
