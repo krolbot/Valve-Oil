@@ -134,11 +134,27 @@
     "save_menu": "Save…"
   },
   "temps": {
-    "hide_line": "Hide {{name}} on the chart",
-    "show_line": "Show {{name}} on the chart",
-    "power": "{{pct}}% power",
+    "chart": "Chart",
+    "chart_for": "Open the chart for {{name}}",
+    "col_heater": "Heater",
+    "col_now": "Now",
+    "col_target": "Target",
+    "col_trend": "Trend",
+    "power": "Power",
+    "window": "Time shown",
+    "heaters": "Heaters",
+    "printer": "Printer",
+    "humidity": "Humidity",
+    "humidity_note": "Humidity {{pct}}%",
+    "box_heater_side": "Heater {{side}}",
+    "chamber_protection": "Chamber protection",
+    "trend_holding": "holding",
+    "trend_steady": "steady",
+    "trend_rate": "{{rate}}°/min",
     "target_hint": "Type a {{name}} target and press Enter. 0 turns it off.",
-    "fan_title": "{{name}}: fan {{pct}}%, target {{target}}°"
+    "fan_title": "{{name}}: fan {{pct}}%, target {{target}}°",
+    "line_title": "{{name}}: tap to show or highlight it, double-tap to hide it",
+    "legend_hint": "Tap a line to show it, tap again to highlight it, and double-tap to hide it."
   },
   "outputs": {
     "tab_fans": "Fans",

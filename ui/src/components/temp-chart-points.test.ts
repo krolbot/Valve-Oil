@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bucketPoints, type ChartPoint } from './temp-chart-points'
+import { bucketPoints, chartRange, type ChartPoint } from './temp-chart-points'
 
 // A nozzle holding 220° with a reading that wobbles by up to a degree each second.
 const history = Array.from({ length: 1300 }, (_, k) => 220 + Math.sin(k * 2.7) + ((k * 7919) % 13) / 13 - 0.5)
@@ -27,5 +27,29 @@ describe('temperature chart buckets', () => {
     expect(bucketPoints(temps, 0, 2, 'mean').map((p) => p.v)).toEqual([200.5, null, null, 202])
     const targets = [0, 0, 220, 220, 220, 0]
     expect(bucketPoints(targets, 1, 2, 'last').map((p) => p.v)).toEqual([null, 220, 220, null])
+  })
+})
+
+describe('temperature chart range', () => {
+  it('keeps the top gridline above the highest reading', () => {
+    // The Max 4's sensors, 22.4° to 30.3°: 2° steps, and the top at 32°, not 30°.
+    expect(chartRange(22.4, 30.3, 4, [2, 5, 10, 20, 25, 50, 100])).toEqual({ bottom: 22, top: 32, step: 2 })
+    // The same in 5° steps tops out at 35°.
+    expect(chartRange(22.4, 30.3, 2, [5, 10])).toEqual({ bottom: 20, top: 35, step: 5 })
+  })
+
+  it('adds a step when a reading sits on or just under a gridline', () => {
+    expect(chartRange(20, 60, 3, [5, 10, 20, 25, 50, 100]).top).toBe(80)
+    expect(chartRange(20, 99.5, 3, [5, 10, 20, 25, 50, 100]).top).toBe(150)
+  })
+
+  it('leaves the top where it is when there is room under it', () => {
+    expect(chartRange(20, 55, 3, [5, 10, 20, 25, 50, 100]).top).toBe(60)
+  })
+
+  it('draws at least two steps for a flat line', () => {
+    const r = chartRange(24.5, 24.6, 4, [2, 5, 10])
+    expect(r.top - r.bottom).toBeGreaterThanOrEqual(2 * r.step)
+    expect(r.top).toBeGreaterThan(24.6)
   })
 })

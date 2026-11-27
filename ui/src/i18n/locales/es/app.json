@@ -118,8 +118,7 @@
     "now": "ahora",
     "minutes_back": "−{{m}} min",
     "seconds_ago": "hace {{s}} s",
-    "aria": "Historial de temperaturas",
-    "window_short": "{{m}} min"
+    "aria": "Historial de temperaturas"
   },
   "mini_console": {
     "title": "Consola",

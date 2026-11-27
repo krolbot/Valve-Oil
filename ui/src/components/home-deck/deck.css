@@ -145,41 +145,95 @@
 .steprock > button.motoroff:hover:not(:disabled) { background: var(--hover-2); color: var(--ink); }
 .steprock > button:is(.nohome, .homeall, .motoroff):disabled { opacity: 0.45; }
 
-/* Mockup B's temperatures card. */
-.tc { display: flex; flex-direction: column; }
-.tc-heaters { display: grid; gap: 2px; }
-.tc-row { position: relative; display: grid; grid-template-columns: 18px minmax(0, 1fr) auto 82px; align-items: center; gap: 8px; min-height: 44px; padding: 4px 4px 4px 0; border-radius: 10px; }
-.tc-row:hover { background: var(--hover); }
-.tc-sw { align-self: stretch; display: grid; place-items: center; border: 0; background: none; padding: 0; cursor: pointer; }
-.tc-sw > span { width: 4px; height: 26px; border-radius: 3px; background: var(--c); transition: opacity 0.12s; }
-.tc-sw.hid > span { background: none; box-shadow: inset 0 0 0 1.5px var(--c); opacity: 0.6; }
-.tc-sw:disabled { cursor: default; }
-.tc-name { display: grid; min-width: 0; line-height: 1.2; }
-.tc-name b { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tc-name small { font-size: 11px; color: var(--ink-3); }
-.tc-now { font-size: 18px; font-weight: 700; color: var(--ink-2); }
-.tc-row.on .tc-now { color: var(--ink); }
-.tc-tgt { position: relative; display: flex; align-items: center; height: 32px; border-radius: 8px; padding: 0 8px 0 6px; gap: 4px; cursor: text; }
-.tc-tgt .arrow { font-size: 12px; color: var(--ink-3); }
-.tc-tgt input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; padding: 0; text-align: right; font-size: 14px; font-weight: 700; color: var(--ink-2); outline: none; }
-.tc-tgt input::placeholder { color: var(--ink-3); font-weight: 500; }
+/* The temperatures card: a table of heaters, then sensor groups. Narrow cards drop the trend, then the little charts. */
+.tc { display: flex; flex-direction: column; container-type: inline-size; }
+/* Fixed columns, so a changing trend or temperature never moves Target out from under a click. The heater's name takes
+ * what's left; the trend has room for its longest text and cuts off anything longer. */
+.tc-tab { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.tc-tab :is(th, td) { box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-tab th { padding: 0 4px 4px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-3); text-align: right; }
+.tc-tab th.l { text-align: left; }
+.tc-tab th.c-sw { width: 8px; }
+.tc-tab th.c-now { width: 64px; }
+.tc-tab th.c-tg { width: 66px; }
+.tc-tab th.tc-pw { width: 84px; }
+.tc-tab th.tc-trend { width: 78px; }
+.tc-tab th.tc-hist { width: 72px; }
+.tc-tab td { height: 32px; padding: 2px 4px; border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); text-align: right; }
+.tc-tab td.sw { padding: 2px 4px 2px 0; }
+.tc-tab td.sw i { display: block; width: 4px; height: 20px; border-radius: 2px; background: var(--c); }
+.tc-tab td.nm { text-align: left; font-size: 13.5px; font-weight: 650; }
+.tc-tab td.now { font-size: 14.5px; font-weight: 700; color: var(--ink-2); }
+.tc-tab tr.on td.now { color: var(--ink); }
+.tc-tab td.tg { padding-right: 0; overflow: visible; }
+.tc-tab .tc-pw { color: var(--ink-2); }
+.tc-tab td.tc-trend { font-size: 11.5px; color: var(--ink-3); }
+.tc-tab td.tc-hist { padding: 2px 0 2px 4px; }
+.tc-tab .muted { color: var(--ink-3); }
+.pbar { display: inline-block; width: 32px; height: 4px; margin-left: 6px; border-radius: 2px; background: var(--inset); vertical-align: middle; overflow: hidden; }
+.pbar > span { display: block; height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.4s; }
+.spark { display: block; margin-left: auto; padding: 3px; border: 0; border-radius: 6px; background: none; cursor: pointer; }
+.spark:hover, .spark:focus-visible { background: var(--hover-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
+@container (max-width: 520px) { .tc-tab .pbar { display: none; } .tc-tab th.tc-pw { width: 56px; } }
+@container (max-width: 400px) { .tc-tab .tc-trend { display: none; } }
+@container (max-width: 350px) { .tc-tab .tc-pw { display: none; } }
+@container (max-width: 300px) { .tc-tab .tc-hist { display: none; } }
+
+.tc-tgt { position: relative; display: flex; align-items: center; justify-content: flex-end; height: 26px; border-radius: 7px; padding: 0 6px; gap: 3px; cursor: text; }
+.tc-tgt .arrow { font-size: 12px; color: var(--accent-ink); }
+.tc-tgt input { width: 3.2ch; min-width: 0; height: 100%; border: 0; background: none; padding: 0; text-align: right; font-size: 13.5px; font-weight: 700; color: var(--ink-2); outline: none; }
+.tc-tgt input::placeholder { color: var(--ink-3); font-weight: 600; }
 .tc-tgt.set input { color: var(--accent-ink); }
-.tc-tgt .unit { font-size: 13px; font-weight: 700; color: var(--accent-ink); margin-left: -2px; }
-.tc-row:hover .tc-tgt, .tc-tgt:focus-within { background: var(--inset); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.tc-tgt .unit { font-size: 13px; font-weight: 700; color: var(--accent-ink); margin-left: -3px; }
+.tc-tab tr:hover .tc-tgt, .tc-tgt:focus-within { background: var(--inset); box-shadow: inset 0 0 0 1px var(--line-strong); }
 .tc-tgt:focus-within { box-shadow: inset 0 0 0 1px var(--accent); }
 .tc-tgt:has(input:disabled) { opacity: 0.45; cursor: default; }
-.tc-bar { position: absolute; left: 26px; right: 4px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--inset); overflow: hidden; }
-.tc-bar > span { display: block; height: 100%; border-radius: 2px; background: var(--c); transition: width 0.4s; }
+.tc-tgt:not(.set):not(:focus-within) .arrow { visibility: hidden; }
 
-.tc-sensors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
-.tc-sensor { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 3px 0; font-size: 12.5px; }
+.tc-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+@container (min-width: 400px) { .tc-groups.row { grid-template-columns: var(--tc-cols); } }
+.tc-groups.solo .rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); column-gap: 14px; }
+.tc-group { min-width: 0; }
+.tc-group h4 { margin: 0 0 3px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-3); }
+.tc-sensor { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 1.5px 0; font-size: 12px; }
 .tc-sensor .k { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-3); }
 .tc-sensor .v { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
 .tc-sensor .v small { font-weight: 500; color: var(--ink-3); }
 
-/* A fixed height: stretched to the tallest column, the lines sat below the bottom of the screen. */
-.tc-chart { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); height: clamp(160px, 22vh, 240px); flex: none; }
-.tc-tgt:not(.set):not(:focus-within) .arrow { visibility: hidden; }
+/* The full temperature chart. */
+.tcx-chip { padding: 4px 10px; border: 0; border-radius: 8px; background: none; box-shadow: inset 0 0 0 1px var(--line-strong); font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.tcx-chip.on { background: var(--inset); color: var(--ink); }
+.tcx-seg { display: inline-flex; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-strong); overflow: hidden; }
+.tcx-seg > button { padding: 4px 11px; border: 0; background: none; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.tcx-seg > button:hover { color: var(--ink); }
+.tcx-seg > button.on { background: var(--inset); color: var(--ink); }
+.tcx-body { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 18px; height: 100%; min-height: 0; }
+.tcx-chart { position: relative; min-width: 0; min-height: 260px; }
+.tcx-tip { position: absolute; top: 10px; left: 0; z-index: 2; width: max-content; max-width: 100%; padding: 7px 10px; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-overlay); font-size: 11.5px; pointer-events: none; }
+.tcx-tip .when { margin-bottom: 3px; color: var(--ink-3); }
+.tcx-tip .l { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 7px; padding: 1px 0; }
+.tcx-tip .l i { width: 10px; height: 3px; border-radius: 2px; background: var(--c); }
+.tcx-tip .l span { color: var(--ink-2); }
+.tcx-tip .l b { font-weight: 700; text-align: right; white-space: nowrap; }
+.tcx-tip .l small { font-size: inherit; color: var(--accent-ink); }
+.tcx-tip .l em { font-style: normal; font-weight: 500; color: var(--ink-3); }
+.tcx-legend { min-height: 0; overflow: auto; }
+.tcx-legend h4 { display: flex; justify-content: space-between; margin: 10px 0 3px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-3); }
+.tcx-legend > div:first-child h4 { margin-top: 0; }
+.tcx-legend h4 span { letter-spacing: 0; text-transform: none; color: var(--ink-2); }
+.tcx-lg { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 4px; width: 100%; min-height: 28px; padding: 0 6px 0 0; border: 0; border-radius: 7px; background: none; text-align: left; font-size: 12.5px; color: var(--ink); cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.tcx-lg:hover { background: var(--hover); }
+.tcx-lg.sel { background: var(--hover-2); }
+.tcx-lg > i { justify-self: center; width: 14px; height: 4px; border-radius: 2px; background: var(--c); }
+.tcx-lg.off > i { background: none; box-shadow: inset 0 0 0 1.5px var(--c); opacity: 0.6; }
+.tcx-lg .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.tcx-lg.off .nm, .tcx-lg.off .v { color: var(--ink-3); font-weight: 500; }
+.tcx-lg .v { font-weight: 700; white-space: nowrap; }
+.tcx-lg .v small { margin-left: 4px; font-size: inherit; color: var(--accent-ink); }
+.tcx-legend .hint { margin: 12px 0 0; font-size: 11px; line-height: 1.45; color: var(--ink-3); }
+@media (max-width: 760px) {
+  .tcx-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(260px, 1fr) auto; }
+}
 
 /* ---- the filament path in one row ---- */
 .frail { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 7px 10px; border-radius: 10px; background: var(--inset); box-shadow: inset 0 0 0 1px var(--line); font-size: 12px; color: var(--ink-3); }

@@ -118,8 +118,7 @@
     "now": "now",
     "minutes_back": "−{{m}}m",
     "seconds_ago": "{{s}} s ago",
-    "aria": "Temperature history",
-    "window_short": "{{m}}m"
+    "aria": "Temperature history"
   },
   "mini_console": {
     "title": "Console",
