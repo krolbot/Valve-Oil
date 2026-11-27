@@ -49,7 +49,8 @@
   },
   "live": {
     "open": "Open the G-code preview",
-    "file_size": "The file is {{size}}."
+    "file_size": "The file is {{size}}.",
+    "no_file": "The file being printed isn't in the G-code files, so its layers can't be shown."
   },
   "load": {
     "downloading": "Downloading",

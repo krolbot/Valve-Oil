@@ -30,6 +30,17 @@
     "last_failed": "Última impresión, fallida {{ago}}",
     "empty": "Sube un archivo o envía uno desde tu slicer."
   },
+  "power_loss": {
+    "title": "Impresión interrumpida",
+    "stopped": "Se detuvo en la capa {{layer}} cuando la impresora se quedó sin corriente.",
+    "resume": "Reanudar impresión",
+    "resume_title": "¿Reanudar esta impresión?",
+    "resume_body": "La impresora se calienta y continúa desde la capa {{layer}}. Comprueba que la pieza sigue en la cama y que nada se interpone en el camino del cabezal.",
+    "busy": "La impresora no puede reanudar esta impresión ahora. Espera a que Klipper esté listo y no haya ninguna impresión en curso ni en pausa.",
+    "discard": "Descartar",
+    "discard_title": "¿Descartar esta impresión?",
+    "discard_body": "La impresora no volverá a ofrecer reanudarla, ni aquí ni en su pantalla."
+  },
   "recent": {
     "title": "Archivos recientes",
     "all": "Todos los archivos",

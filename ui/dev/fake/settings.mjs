@@ -129,10 +129,16 @@ export function install(fake) {
   // ---------------- LAN only mode ----------------
   // QIDI's Moonraker answers its settings table with a status, not an RPC error.
   let lanMode = fake.args['lan-mode'] ?? '0'
-  if (lanMode !== 'none')
+  if (lanMode !== 'none') {
+    // Wrapped, so other plugins answer their own items (power-loss.mjs answers print_state), whichever loads first.
+    fake.wrap('server.database.config.select', (p, ws, next) =>
+      p.section === 'general' && p.key === 'lan_mode'
+        ? { status: 'success', result: { 'general.lan_mode': lanMode } }
+        : Promise.resolve()
+            .then(() => next(p, ws))
+            .catch(() => ({ status: 'error', message: `Config item '${p.section}.${p.key}' not found` })),
+    )
     fake.handle({
-      'server.database.config.select': (p) =>
-        p.section === 'general' && p.key === 'lan_mode' ? { status: 'success', result: { 'general.lan_mode': lanMode } } : { status: 'error', message: `Config item '${p.section}.${p.key}' not found` },
       'server.database.config.update': (p) => {
         if (p.section !== 'general' || p.key !== 'lan_mode') return { status: 'error', message: `Config item '${p.section}.${p.key}' not found` }
         lanMode = String(p.value)
@@ -140,6 +146,7 @@ export function install(fake) {
         return { status: 'success', result: { 'general.lan_mode': lanMode } }
       },
     })
+  }
 
   // ---------------- temperature presets ----------------
   // Fluidd's shape (uiSettings.dashboard.tempPresets), keyed by heater names as Fluidd keys them.

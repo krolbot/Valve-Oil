@@ -6,6 +6,7 @@ import { PrintDialog } from '../PrintDialog'
 import { queueActions, useComponent } from '../../state/history'
 import { useJobActive } from '../../state/job'
 import { displayName } from '../../lib/format'
+import { useFileMeta, useGcodesFile } from '../../state/files'
 import { t } from '../../i18n'
 import { cellText, columnColors, fmtDateTime, fmtLength, fmtSpan, historyColumns, type Column, type Job } from './logic'
 import { Cell, StatusPill, Thumb, confirmDelete } from './bits'
@@ -21,15 +22,20 @@ export function JobDialog({ job, onClose }: { job: Job; onClose: () => void }) {
   const hasValue = (c: Column) => (c.kind !== 'colors' ? cellText(job, c) != null : columnColors(job, c) != null)
   const details = historyColumns([job]).filter((c) => !SUMMARY.has(c.key) && c.key !== 'user' && !c.key.startsWith('auxiliary_data.') && hasValue(c))
   const aux = job.auxiliary_data ?? []
+  // A print QIDI's power-loss resume restarted names QIDI's copy of the file; print and queue the original instead.
+  const file = useGcodesFile(job.filename)
+  const resumed = !!file && file !== job.filename
+  const printable = resumed || (!!file && !!job.exists)
+  const fileMeta = useFileMeta(resumed ? file : null)
 
   const enqueue = async () => {
     await attempt(async () => {
-      await queueActions.post([job.filename])
+      await queueActions.post([file!])
       toast(t('history.job.added_to_queue', { name: displayName(job.filename) }))
     })
   }
 
-  if (print) return <PrintDialog filename={job.filename} onClose={() => (setPrint(false), onClose())} />
+  if (print && file) return <PrintDialog filename={file} onClose={() => (setPrint(false), onClose())} />
 
   return (
     <Dialog
@@ -47,12 +53,12 @@ export function JobDialog({ job, onClose }: { job: Job; onClose: () => void }) {
           <button className="btn btn-danger mr-auto" onClick={() => confirmDelete(job).then(onClose)}>
             <Trash2 size={15} /> {t('common.delete')}
           </button>
-          {hasQueue && job.exists && (
+          {hasQueue && printable && (
             <button className="btn" onClick={enqueue}>
               <ListPlus size={15} /> {t('history.job.add_to_queue')}
             </button>
           )}
-          {job.exists && (
+          {printable && (
             <button className="btn btn-primary" disabled={printing} onClick={() => setPrint(true)} title={printing ? t('history.job.printer_busy') : undefined}>
               <Play size={15} /> {t('history.job.print_again')}
             </button>
@@ -61,7 +67,7 @@ export function JobDialog({ job, onClose }: { job: Job; onClose: () => void }) {
       }
     >
       <div className="grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)]">
-        <Thumb filename={job.filename} meta={job.metadata} exists={job.exists} size={180} className="mx-auto max-w-full sm:mx-0" />
+        <Thumb filename={resumed ? file : job.filename} meta={resumed ? fileMeta : job.metadata} exists={resumed || job.exists} size={180} className="mx-auto max-w-full sm:mx-0" />
         <div className="min-w-0">
           <div className="mb-2 text-[12.5px] break-all text-ink-3">
             {job.filename}

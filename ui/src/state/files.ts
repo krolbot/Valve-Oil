@@ -91,18 +91,87 @@ export function fetchMeta(filename: string, force = false): Promise<FileMeta | n
   return p
 }
 
-export function useFileMeta(filename: string | null | undefined) {
+/** A file's metadata: undefined until Moonraker answers, null when it has none for the file (or no file is given). */
+export function useFileMeta(filename: string | null | undefined): FileMeta | null | undefined {
   const filesRev = usePrinter((s) => s.filesRev)
-  const [meta, setMeta] = useState<FileMeta | null>(filename ? (metaCache.get(filename) ?? null) : null)
+  const open = useConnected()
+  const [meta, setMeta] = useState<FileMeta | null | undefined>(filename ? metaCache.get(filename) : null)
   useEffect(() => {
     if (!filename) return setMeta(null)
+    if (!open) return
     let live = true
-    fetchMeta(filename, filesRev > 0).then((m) => live && setMeta(m))
+    // A file found missing is asked about again, as a lookup made before the connection opened is cached as missing.
+    fetchMeta(filename, filesRev > 0 || metaCache.get(filename) === null).then((m) => live && setMeta(m))
     return () => {
       live = false
     }
-  }, [filename, filesRev])
+  }, [filename, filesRev, open])
   return meta
+}
+
+/**
+ * Where to look in the gcodes root for the file a printer or history file name refers to, best first. Names are
+ * usually relative to the gcodes root already. QIDI's power-loss resume prints its copy of the file in
+ * ~/printer_data/.cache/, so print_stats and history name that absolute path instead, by base name only: the file
+ * is the newest earlier job of the same base name (its folder included) that started after the file was last
+ * changed, or else a file of that name at the top of the gcodes root.
+ */
+export function gcodesCandidates(name: string, jobs: readonly HistoryJob[]): { path: string; before?: number }[] {
+  if (!name.startsWith('/')) return [{ path: name }]
+  const inRoot = /^.*?\/printer_data\/gcodes\/(.+)$/.exec(name)
+  if (inRoot) return [{ path: inRoot[1] }]
+  const base = baseName(name)
+  const earlier = jobs.find((j) => !j.filename.startsWith('/') && baseName(j.filename) === base)
+  return [...(earlier ? [{ path: earlier.filename, before: earlier.start_time }] : []), ...(earlier?.filename === base ? [] : [{ path: base }])]
+}
+
+const resolved = new Map<string, Promise<string | null>>()
+
+/**
+ * The gcodes-root path of the file a printer or history file name refers to, or null when there's none. Looked up
+ * once for each `filesRev`, so a file uploaded or deleted since is seen.
+ */
+export function resolveGcodesFile(name: string, filesRev = 0): Promise<string | null> {
+  const key = `${filesRev}:${name}`
+  let p = resolved.get(key)
+  if (p) return p
+  p = Promise.resolve(afterKlipperAnswers())
+    .then(() => client.call<{ jobs: HistoryJob[] }>('server.history.list', { limit: 50, order: 'desc' }))
+    .then((r) => r.jobs, () => [] as HistoryJob[])
+    .then(async (jobs) => {
+      for (const c of gcodesCandidates(name, jobs)) {
+        const meta = await fetchMeta(c.path, filesRev > 0)
+        // A file changed after that job started isn't the one it printed.
+        if (meta && (c.before == null || meta.modified == null || meta.modified <= c.before)) return c.path
+      }
+      return null
+    })
+  resolved.set(key, p)
+  // Not found, perhaps only because the connection dropped: look again next time.
+  p.then((path) => path == null && resolved.get(key) === p && resolved.delete(key))
+  return p
+}
+
+/**
+ * The gcodes-root path for a printer or history file name (see `gcodesCandidates`): the name itself when it's
+ * relative already; for an absolute one, undefined while it's looked up, then the file or null when there's none.
+ */
+export function useGcodesFile(name: string | null | undefined): string | null | undefined {
+  const filesRev = usePrinter((s) => s.filesRev)
+  const open = useConnected()
+  const absolute = !!name && name.startsWith('/')
+  const [found, setFound] = useState<{ name: string; path: string | null } | null>(null)
+  useEffect(() => {
+    if (!absolute || !open) return
+    let live = true
+    resolveGcodesFile(name, filesRev).then((path) => live && setFound({ name, path }))
+    return () => {
+      live = false
+    }
+  }, [absolute, name, filesRev, open])
+  if (!name) return null
+  if (!absolute) return name
+  return found?.name === name ? found.path : undefined
 }
 
 /** URL of the largest thumbnail, resolved relative to the G-code file's folder. */

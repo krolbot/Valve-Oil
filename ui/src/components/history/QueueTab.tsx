@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type DragEvent } from 'react'
 import { ArrowUpToLine, Copy, Ellipsis, GripVertical, ListOrdered, Pause, Play, Plus, RefreshCw, Search, Trash2 } from 'lucide-react'
 import { CancelButton, Card, Dialog, Empty, Field, Loading, MenuButton, confirm } from '../ui'
 import { attempt, toast } from '../toast'
-import { fetchMeta, useFileMeta, useFiles, type FileMeta } from '../../state/files'
+import { fetchMeta, useFileMeta, useFiles, useGcodesFile, type FileMeta } from '../../state/files'
 import { loadQueue, queueActions, useQueue } from '../../state/history'
 import { useJob, isActive, remainingSeconds } from '../../state/job'
 import { usePrinter } from '../../state/printer'
@@ -52,7 +52,7 @@ export function QueueTab() {
 
   const totals = queueTotals(jobs, (f) => meta[f])
   const busy = isActive(job.state)
-  const current = useFileMeta(busy ? job.filename : null)
+  const current = useFileMeta(useGcodesFile(busy ? job.filename : null))
   // Fluidd's ETA: after the current print's estimate when one runs, else from now.
   const remaining = busy ? (remainingSeconds(job, current) ?? 0) : 0
   const sel = jobs.filter((j) => selected.has(j.job_id))

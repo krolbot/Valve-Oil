@@ -21,7 +21,8 @@ import { attempt } from '../components/toast'
 import { client, onKlippyReady, runGcode, useConnected } from '../state/printer'
 import { useBoxPresent } from '../state/box'
 import { jobProgress, remainingSeconds, useJob } from '../state/job'
-import { fileHistory, thumbnailUrl, useFileMeta, useFiles, useHistory, type HistoryJob } from '../state/files'
+import { fileHistory, thumbnailUrl, useFileMeta, useFiles, useGcodesFile, useHistory, type HistoryJob } from '../state/files'
+import { discardPowerLoss, resumeAllowedNow, resumePowerLoss, usePowerLossOffer, type PowerLossOffer } from '../state/power-loss'
 import { displayName, fmtAgo, fmtDuration, fmtEta } from '../lib/format'
 import { normalizeQidiColor } from '../qidi/qidi-box'
 import { readLocal, saveLocal, useMedia } from '../lib/browser'
@@ -104,11 +105,13 @@ async function confirmCancel() {
 
 export function JobCard() {
   const job = useJob()
-  const meta = useFileMeta(job.filename)
+  // The file in the gcodes root, also for a print QIDI's power-loss resume restarted from its copy outside it.
+  const file = useGcodesFile(job.filename)
+  const meta = useFileMeta(file)
   const [tune, setTune] = useState(false)
   const p = jobProgress(job)
   const remaining = remainingSeconds(job, meta)
-  const thumb = thumbnailUrl(job.filename, meta, 200)
+  const thumb = file ? thumbnailUrl(file, meta, 200) : null
   const colors = (meta?.filament_colors ?? []).map(normalizeQidiColor)
   const types = (meta?.filament_type ?? '').split(';').map((t) => t.trim())
   const finished = job.state === 'complete' || job.state === 'cancelled' || job.state === 'error'
@@ -231,11 +234,14 @@ export function JobCard() {
 // ---- between prints ----
 export function ReadyCard({ jobs }: { jobs: HistoryJob[] | null }) {
   const last = jobs?.[0]
+  const offer = usePowerLossOffer(last)
   return (
     <section className="card grid grid-cols-1 content-start gap-3">
       <div>
-        <div className="lbl">{t('home.ready.title')}</div>
-        {last ? (
+        <div className={`lbl ${offer ? 'text-warn!' : ''}`}>{offer ? t('home.power_loss.title') : t('home.ready.title')}</div>
+        {offer ? (
+          <PowerLossResume offer={offer} />
+        ) : last ? (
           <div className="mt-1 flex items-center gap-2">
             <div className="min-w-0 flex-1">
               <div className="truncate font-semibold" title={last.filename}>
@@ -256,6 +262,56 @@ export function ReadyCard({ jobs }: { jobs: HistoryJob[] | null }) {
       </div>
       <DropZone className="py-3!" />
     </section>
+  )
+}
+
+// A print a power cut stopped, offered for resuming as QIDI's touchscreen offers it.
+function PowerLossResume({ offer }: { offer: PowerLossOffer }) {
+  const [busy, setBusy] = useState(false)
+  // Busy from the first click until the call ends, so a double click can't send two resumes.
+  const run = async (ask: () => Promise<boolean>, action: () => Promise<unknown>) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      if (await ask()) await attempt(action)
+    } finally {
+      setBusy(false)
+    }
+  }
+  const resume = () =>
+    run(
+      () =>
+        confirm({
+          title: t('home.power_loss.resume_title'),
+          body: t('home.power_loss.resume_body', { layer: offer.layer }),
+          confirm: t('home.power_loss.resume'),
+          validate: () => (resumeAllowedNow() ? null : t('home.power_loss.busy')),
+        }),
+      () => resumePowerLoss(offer),
+    )
+  const discard = () =>
+    run(
+      () => confirm({ title: t('home.power_loss.discard_title'), body: t('home.power_loss.discard_body'), confirm: t('home.power_loss.discard'), danger: true }),
+      () => discardPowerLoss(offer),
+    )
+  return (
+    <div className="mt-1 grid gap-2.5">
+      <div className="min-w-0">
+        <div className="truncate font-semibold" title={offer.filename}>
+          {displayName(offer.filename)}
+        </div>
+        <div className="text-[12.5px] text-ink-3">{t('home.power_loss.stopped', { layer: offer.layer })}</div>
+      </div>
+      {/* Side by side, each on its own line when the language's labels don't fit. */}
+      <div className="flex flex-wrap gap-2">
+        <button className="btn btn-primary flex-auto" disabled={busy} onClick={resume}>
+          <Play size={14} /> {t('home.power_loss.resume')}
+        </button>
+        <button className="btn flex-auto" disabled={busy} onClick={discard}>
+          <X size={14} /> {t('home.power_loss.discard')}
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -308,12 +364,15 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function ReprintButton({ filename, small }: { filename: string; small?: boolean }) {
   const [open, setOpen] = useState(false)
+  // QIDI's power-loss resume names its own copy of the file, which starting a print of would delete; print the original.
+  const file = useGcodesFile(filename)
+  if (!file) return null
   return (
     <>
       <button className={`btn ${small ? 'btn-sm' : 'btn-primary'}`} onClick={() => setOpen(true)}>
         <RotateCcw size={small ? 13 : 14} /> {t('home.job.print_again')}
       </button>
-      {open && <PrintDialog filename={filename} onClose={() => setOpen(false)} />}
+      {open && <PrintDialog filename={file} onClose={() => setOpen(false)} />}
     </>
   )
 }
