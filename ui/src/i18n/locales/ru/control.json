@@ -160,7 +160,8 @@
     "brightness": "Яркость",
     "brightness_named": "{{name}}: яркость",
     "white": "Белый",
-    "white_named": "{{name}}: белый"
+    "white_named": "{{name}}: белый",
+    "presets_named": "Быстрые значения: {{name}}"
   },
   "macros": {
     "all_hidden": "Все макросы скрыты. Откройте «Упорядочить», чтобы показать нужные.",

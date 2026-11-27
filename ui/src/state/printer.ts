@@ -164,6 +164,7 @@ const SUBSCRIBE = [
   'tmc5160 ',
   'closed_loop ',
   'gcode_macro TIMELAPSE_TAKE_FRAME',
+  'gcode_macro VO_LIGHT_EFFECT',
 ]
 const extraMatchers: ((name: string) => boolean)[] = []
 // Objects subscribed to only some fields: configfile's settings are large and queried once instead.

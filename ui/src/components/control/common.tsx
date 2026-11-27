@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { attempt, toast } from '../toast'
+import { MenuButton } from '../ui'
 import { printer, runGcode, usePrinter } from '../../state/printer'
 import { clampJog, moveGcode } from './gcode'
 import { t } from '../../i18n'
@@ -42,6 +43,7 @@ export function Slider({
   disabled,
   label,
   format = (v) => `${v}`,
+  presets,
 }: {
   value: number
   onCommit: (v: number) => void
@@ -51,6 +53,8 @@ export function Slider({
   disabled?: boolean
   label: string
   format?: (v: number) => string
+  /** Values offered in a menu from the value beside the slider. */
+  presets?: number[]
 }) {
   const [draft, setDraft] = useState<number | null>(null)
   useEffect(() => setDraft(null), [value])
@@ -76,7 +80,17 @@ export function Slider({
         onKeyUp={commit}
         onBlur={() => draft != null && commit()}
       />
-      <span className="num w-[52px] flex-none text-right font-semibold">{format(shown)}</span>
+      {presets && !disabled ? (
+        <MenuButton
+          button={format(shown)}
+          className="slider-value num"
+          menuClassName="min-w-0!"
+          label={t('control.outputs.presets_named', { name: label })}
+          items={presets.map((p) => ({ label: <span className="num">{format(p)}</span>, onSelect: () => p !== value && onCommit(p) }))}
+        />
+      ) : (
+        <span className="num w-[52px] flex-none text-right font-semibold">{format(shown)}</span>
+      )}
     </div>
   )
 }

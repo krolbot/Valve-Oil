@@ -259,6 +259,7 @@ install:
       - "resonance_sweep.cfg"
       - "bed_soak.cfg"
       - "update_lights.cfg"
+      - "lights.cfg"
       - "renamed_commands.cfg"
       - "klipper.cfg"
 

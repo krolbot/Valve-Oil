@@ -367,7 +367,7 @@ export function Spinner({ size = 16, className = '' }: { size?: number; classNam
 }
 
 /** A button that opens a small menu below it. Items close the menu when picked. */
-export function MenuButton({ button, items, align = 'right', className = 'iconbtn', label }: { button: ReactNode; items: ({ label: ReactNode; icon?: ReactNode; onSelect: () => void; danger?: boolean; disabled?: boolean } | null | false)[]; align?: 'left' | 'right'; className?: string; label?: string }) {
+export function MenuButton({ button, items, align = 'right', className = 'iconbtn', menuClassName = '', label }: { button: ReactNode; items: ({ label: ReactNode; icon?: ReactNode; onSelect: () => void; danger?: boolean; disabled?: boolean } | null | false)[]; align?: 'left' | 'right'; className?: string; menuClassName?: string; label?: string }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   // An item's dialog takes its opener from the focused element, and the item itself goes when the menu closes.
@@ -441,7 +441,7 @@ export function MenuButton({ button, items, align = 'right', className = 'iconbt
       {open && (
         <div
           ref={menuRef}
-          className="menu top-[calc(100%+4px)]"
+          className={`menu top-[calc(100%+4px)] ${menuClassName}`}
           style={align === 'right' ? { right: 0 } : { left: 0 }}
           role="menu"
           aria-label={label}
