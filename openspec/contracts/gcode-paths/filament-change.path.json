@@ -184,24 +184,18 @@
       ]
     },
     {
-      "name": "chute_move_restores_state",
+      "name": "chute_move_homes_x_y_first",
       "source_macro": "_VO_MOVE_TO_TRASH_MOTION",
-      "condition": "the move to the chute from anywhere on or behind the bed",
+      "condition": "every move to the chute outside a cancel; X and Y are homed first if they aren't",
       "slice": {
-        "start": "{% set saved_accel = printer.toolhead.max_accel|float %}"
+        "start": "G28 O X Y"
       },
       "must_include_order": [
-        "SAVE_GCODE_STATE NAME=vo_move_to_trash_state",
-        "G90",
         "G28 O X Y",
-        "M204 S10000",
-        "SET_VELOCITY_LIMIT ACCEL={saved_accel}",
-        "RESTORE_GCODE_STATE NAME=vo_move_to_trash_state"
+        "_VO_CHUTE_APPROACH"
       ],
       "must_not_include": [
-        "F3500",
-        "G1 E",
-        "G1 Z"
+        "G1 "
       ]
     },
     {

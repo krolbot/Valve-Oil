@@ -144,7 +144,7 @@ Forbidden patterns:
 
 Condition: `every move to the chute; skipped once within 2 s of a cut handed to QIDI's flow controller`
 
-Source: `installer/klipper/macros/motion.cfg:14-21`
+Source: `installer/klipper/macros/motion.cfg:14-26`
 
 Direct visible macro calls in branch slice:
 
@@ -216,32 +216,25 @@ Forbidden patterns:
 - `G4 P2000`
 - `G1 E`
 
-### chute_move_restores_state
+### chute_move_homes_x_y_first
 
-Condition: `the move to the chute from anywhere on or behind the bed`
+Condition: `every move to the chute outside a cancel; X and Y are homed first if they aren't`
 
-Source: `installer/klipper/printers/max4/nozzle_motion.cfg:157-182`
+Source: `installer/klipper/macros/motion.cfg:30-31`
 
 Direct visible macro calls in branch slice:
 
-- `save_gcode_state`
 - `g28`
-- `restore_gcode_state`
+- `_VO_CHUTE_APPROACH`
 
 Ordered invariants:
 
-- `SAVE_GCODE_STATE NAME=vo_move_to_trash_state`
-- `G90`
 - `G28 O X Y`
-- `M204 S10000`
-- `SET_VELOCITY_LIMIT ACCEL={saved_accel}`
-- `RESTORE_GCODE_STATE NAME=vo_move_to_trash_state`
+- `_VO_CHUTE_APPROACH`
 
 Forbidden patterns:
 
-- `F3500`
-- `G1 E`
-- `G1 Z`
+- `G1 `
 
 ### unload_through_box_or_vendor_flow
 

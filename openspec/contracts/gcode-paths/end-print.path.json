@@ -285,6 +285,60 @@
       ]
     },
     {
+      "name": "cancel_drops_bed_then_chute_without_homing",
+      "source_macro": "_VO_CANCEL_PARK",
+      "condition": "every operator cancel; the bed drops only with Z homed in Klipper, and the toolhead goes to the chute only with X and Y homed",
+      "slice": {
+        "start": "{% set th = printer.toolhead %}"
+      },
+      "must_include_order": [
+        "th.axis_maximum.z - th.position.z]|min",
+        "SAVE_GCODE_STATE NAME=vo_cancel_park_state",
+        "{% if 'z' in th.homed_axes and drop > 0 %}",
+        "G91",
+        "G1 Z{drop}",
+        "{% endif %}",
+        "{% if 'x' in th.homed_axes and 'y' in th.homed_axes %}",
+        "_VO_CHUTE_APPROACH",
+        "{% endif %}",
+        "RESTORE_GCODE_STATE NAME=vo_cancel_park_state"
+      ],
+      "must_not_include": [
+        "G28",
+        "_HOME_STATE",
+        "SAFE_Z_MOVE",
+        "MOVE_TO_TRASH",
+        "G1 E",
+        "G1 X",
+        "G1 Y",
+        "VO_WIPE_NOZZLE_DROP",
+        "CUT_FILAMENT"
+      ]
+    },
+    {
+      "name": "chute_approach_moves_only",
+      "source_macro": "_VO_CHUTE_APPROACH",
+      "condition": "the cancel's move to the chute, and every other move to the chute after X and Y are homed",
+      "slice": {
+        "start": "{% set saved_accel = printer.toolhead.max_accel|float %}"
+      },
+      "must_include_order": [
+        "SAVE_GCODE_STATE NAME=vo_chute_approach_state",
+        "G90",
+        "M204 S10000",
+        "SET_VELOCITY_LIMIT ACCEL={saved_accel}",
+        "RESTORE_GCODE_STATE NAME=vo_chute_approach_state"
+      ],
+      "must_not_include": [
+        "G28",
+        "F3500",
+        "G1 E",
+        "G1 Z",
+        "_VO_CUTTER_STRIKE",
+        "_VO_WIPE_NOZZLE"
+      ]
+    },
+    {
       "name": "cancel_cooldown_without_waiting",
       "source_macro": "_VO_CANCEL_COOLDOWN",
       "condition": "the nozzle is at or above 170C when the print is stopped",

@@ -103,7 +103,9 @@ This works with files you've already sliced and survives Klipper restarts.
 
 ## Stopping a print
 
-When you stop or cancel a print from Fluidd, the touchscreen, or the console (`CANCEL_PRINT`), the nozzle heater turns off and the part fan runs at 100% straight away. The toolhead then parks where QIDI's cancel parks it, up to Z200 and, on the Max 4, back to Y380 (Z100 on the Smart 5). The part fan keeps running until the nozzle is below 170°C, then turns off. QIDI's cancel kept the nozzle heating at the print's temperature through the slow lift and turned it off only after parking.
+When you stop or cancel a print from Fluidd, the touchscreen, or the console (`CANCEL_PRINT`), the nozzle heater turns off and the part fan runs at 100% straight away. The bed then drops 20 mm, or to the bottom of its travel if that's closer, and the toolhead moves into the waste chute, on the Max 4, Plus 5, and Smart 5. The part fan keeps running until the nozzle is below 170°C, then turns off. QIDI's cancel kept the nozzle heating at the print's temperature through a slow lift to Z200 (Z100 on the Smart 5) and turned it off only after parking.
+
+A cancel never homes. It moves only the axes Klipper has homed, so if X and Y aren't homed the toolhead stays where it is, and if Z isn't homed the bed stays put and the toolhead goes to the chute at its current height, which can take the nozzle across the top of the print. A print resumed after a power loss counts as homed, so cancelling it drops the bed and parks at the chute too. QIDI's park on the Plus 5 and Smart 5 skipped its lift after a power-loss resume and left the nozzle sitting on the print.
 
 If a new print starts while the nozzle cools, or you turn the part fan off or change its speed, the fan is left as the print or you set it.
 

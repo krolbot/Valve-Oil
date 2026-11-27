@@ -7,36 +7,63 @@ import unittest
 from installer.tests.gcode_flow import checks, slicer
 from installer.tests.gcode_flow.printer import FIRMWARE, FlowPrinter
 from installer.tests.gcode_flow.qidi import BoxSetup
+from installer.tests.gcode_flow.test_power_loss_resume import WALL_LINES, saved_state, two_parts
 
 PRINT_TEMPERATURE = 250.
 FAN_OFF_BELOW = 170.
-# QIDI's cancel parks: the Max 4 up to Z200 and back to Y380, the Plus 5 up to Z200, the Smart 5 up to Z100.
-PARK = {"max4": ["G1 Z200 F480", "G1 Y380 F5000"], "plus5": ["G1 Z200 F480"], "smart5": ["G1 Z100 F480"]}
+# How far a cancel drops the bed, mm, unless Z's travel ends sooner.
+BED_DROP = 20.
 PRINT = "\n".join(["G1 X100 Y100 E1 F3000", "G1 X120 Y100 E1 F3000", "_TEST_STOP", "G1 X140 Y100 E1 F3000"])
 
 
 class CancelTests(checks.FlowTestCase):
     def printer(self, printer_id):
-        printer = FlowPrinter(printer_id, box=BoxSetup())
-        if printer_id != "max4":
-            # QIDI's homing sets it; the Plus 5 and Smart 5 cancels lift Z only when it's set.
-            printer.run("SET_GCODE_VARIABLE MACRO=_HOME_STATE VARIABLE=is_homed VALUE=1")
-        return printer
+        # QIDI's _HOME_STATE flag (Plus 5 and Smart 5), which only QIDI's Z homing sets, stays 0 as after a power-loss
+        # resume; the cancel goes by the axes Klipper has homed.
+        return FlowPrinter(printer_id, box=BoxSetup())
 
-    def stop_while_printing(self, printer, nozzle=None):
-        """Stops the print partway, as Moonraker does: CANCEL_PRINT between two of the file's lines, with the nozzle
-        at `nozzle` if given."""
+    def register_stop(self, printer, nozzle=None, homed=None):
+        """_TEST_STOP stops the print where the file has it, as Moonraker does: CANCEL_PRINT between two of the file's
+        lines, with the nozzle at `nozzle` and only the axes in `homed` homed, if given."""
         stopped = {}
 
         def stop(gcmd):
             if nozzle is not None:
                 printer.lookup_object("heaters").lookup_heater("extruder").set_smoothed_temp(nozzle)
+            if homed is not None:
+                printer.toolhead.homed.intersection_update(homed)
             stopped["moves"] = len(printer.toolhead.moves)
             stopped["trace"] = len(printer.trace)
+            stopped["at"] = tuple(printer.toolhead.get_position()[:3])
             printer.gcode.run_script_from_command("CANCEL_PRINT")
         printer.gcode.register_command("_TEST_STOP", stop)
-        printer.start_print(PRINT, nozzle=PRINT_TEMPERATURE)
         return stopped
+
+    def stop_while_printing(self, printer, nozzle=None, homed=None, z=2.):
+        """Stops the print partway, with the nozzle `z` above the bed."""
+        stopped = self.register_stop(printer, nozzle, homed)
+        printer.start_print(PRINT, nozzle=PRINT_TEMPERATURE, at=(150., 150., z))
+        return stopped
+
+    def assert_parked(self, printer, stopped, *, drop, chute):
+        """The cancel's moves: the bed `drop` mm lower first, then, if `chute`, the toolhead into the waste chute at
+        that height, within each printer's rear limits; never a home, and no filament out of the nozzle."""
+        moves = printer.toolhead.moves[stopped["moves"]:]
+        commands = [command.name.upper() for command in printer.trace[stopped["trace"]:]]
+        self.assertEqual([name for name in commands if name.startswith("G28")], [])
+        self.assertEqual([move.extrude for move in moves if move.extrude], [])
+        x, y, z = stopped["at"]
+        if drop:
+            self.assertEqual(moves[0].start[:3], (x, y, z))
+            self.assertEqual(moves[0].end[:3], (x, y, z + drop))
+            moves = moves[1:]
+        self.assertTrue(all(move.end[2] == z + drop for move in moves))
+        if chute:
+            self.assertTrue(all(move.xy_moved for move in moves))
+            self.assertTrue(checks.at_chute(printer, moves[-1].end[:2]), moves[-1].end)
+        else:
+            self.assertEqual(moves, [])
+        checks.assert_rear_moves_around_the_chute(self, printer)
 
     def assert_cools_with_the_fan_until(self, printer):
         """The part fan stays at full until the nozzle is below 170°C, then turns off within the next check."""
@@ -52,22 +79,20 @@ class CancelTests(checks.FlowTestCase):
     def test_stop_turns_the_nozzle_off_and_the_part_fan_on_before_it_parks(self):
         """A stopped print left the nozzle heating at the print's temperature over the print through QIDI's slow lift
         to Z200 (8 mm/s), and turned it off only in PRINT_END, after parking (operator report, 2026-11-24). The nozzle
-        has to go off, with the part fan at full to cool it, before the first park move, and the fan has to stay on
-        until the nozzle is below 170°C, through PRINT_END's M107."""
+        has to go off, with the part fan at full to cool it, before the bed drops 20 mm and the toolhead goes to the
+        waste chute, and the fan has to stay on until the nozzle is below 170°C, through PRINT_END's M107."""
         for printer_id in FIRMWARE:
             with self.subTest(printer=printer_id):
                 printer = self.printer(printer_id)
                 stopped = self.stop_while_printing(printer)
                 checks.assert_no_errors(self, printer)
                 self.assertEqual(printer.status("print_stats")["state"], "cancelled")
-                parked = printer.toolhead.moves[stopped["moves"]:]
-                self.assertEqual([move.stack[-1] for move in parked], PARK[printer_id])
+                self.assert_parked(printer, stopped, drop=BED_DROP, chute=True)
                 lines = [command.line for command in printer.trace[stopped["trace"]:]]
-                first_park = lines.index(PARK[printer_id][0])
+                first_park = next(i for i, line in enumerate(lines) if line.startswith("G1 Z"))
                 self.assertLess(lines.index("M104 S0"), first_park)
                 self.assertLess(lines.index("M106 S255"), first_park)
                 self.assertEqual(printer.status("extruder")["target"], 0.)
-                checks.assert_rear_moves_around_the_chute(self, printer)
                 self.assert_cools_with_the_fan_until(printer)
 
     def test_stop_while_paused_cools_the_nozzle_with_the_part_fan(self):
@@ -84,7 +109,61 @@ class CancelTests(checks.FlowTestCase):
                     self.assertEqual(printer.status("print_stats")["state"], "cancelled")
                     self.assertFalse(printer.status("pause_resume")["is_paused"])
                     checks.assert_rear_moves_around_the_chute(self, printer)
+                    self.assertTrue(checks.at_chute(printer, printer.toolhead.get_position()[:2]))
                     self.assert_cools_with_the_fan_until(printer)
+
+    def test_stop_drops_the_bed_only_as_far_as_z_travels(self):
+        """Near the top of Z's travel the bed drops only to its end, and at the end not at all, and the toolhead still
+        goes to the chute."""
+        for printer_id in FIRMWARE:
+            for below_max in (5., 0.):
+                with self.subTest(printer=printer_id, below_max=below_max):
+                    printer = self.printer(printer_id)
+                    z_max = printer.status("toolhead")["axis_maximum"].z
+                    stopped = self.stop_while_printing(printer, z=z_max - below_max)
+                    checks.assert_no_errors(self, printer)
+                    self.assert_parked(printer, stopped, drop=below_max, chute=True)
+                    self.assertEqual(printer.toolhead.get_position()[2], z_max)
+
+    def test_stop_after_a_power_loss_resume_drops_the_bed_and_goes_to_the_chute(self):
+        """Plus 5, 2026-11-27: a print resumed after a power loss was cancelled and the nozzle stayed on the print.
+        QIDI's resume puts X, Y, and Z back with SET_KINEMATIC_POSITION, which Klipper counts as homed, and homes X
+        and Y but never Z, so QIDI's own homed flag stayed 0 and QIDI's park skipped its move. The cancel goes by the
+        axes Klipper has homed."""
+        lines = two_parts()
+        lost_at = sum(len(line) + 1 for line in lines[:5 + WALL_LINES - 20])
+        lines.insert(5 + WALL_LINES - 10, "_TEST_STOP")
+        for printer_id in FIRMWARE:
+            with self.subTest(printer=printer_id):
+                printer = self.printer(printer_id)
+                stopped = self.register_stop(printer)
+                (printer.root / ".cache/job.gcode").write_text("\n".join(lines), encoding="utf-8")
+                printer.job_lines = lines
+                printer.command("SDCARD_POWER_OFF_CONTINUES_PINT_FILE STATE=%s" % (saved_state(lost_at, []),))
+
+                # The restart lands partway through a line, whose rest Klipper doesn't know as a command.
+                restart = "\n".join(lines)[lost_at - 4096:].split("\n")[0]
+                printer.unknown_commands = [c for c in printer.unknown_commands if c != restart]
+                checks.assert_no_errors(self, printer)
+                self.assertEqual(printer.status("print_stats")["state"], "cancelled")
+                home_state = printer.lookup_object("gcode_macro _HOME_STATE", None)
+                if home_state is not None:
+                    self.assertEqual(home_state.variables["is_homed"], 0)
+                self.assert_parked(printer, stopped, drop=BED_DROP, chute=True)
+
+    def test_stop_never_homes_and_moves_only_homed_axes(self):
+        """A cancel never homes. Without X and Y homed the toolhead stays where it is; without Z homed the bed stays
+        and the toolhead goes to the chute at its height, over the print."""
+        cases = {"x and y not homed": ("z", BED_DROP, False), "nothing homed": ("", 0., False),
+                 "z not homed": ("xy", 0., True)}
+        for printer_id in FIRMWARE:
+            for case, (homed, drop, chute) in cases.items():
+                with self.subTest(printer=printer_id, case=case):
+                    printer = self.printer(printer_id)
+                    stopped = self.stop_while_printing(printer, homed=set(homed))
+                    checks.assert_no_errors(self, printer)
+                    self.assertEqual(printer.status("print_stats")["state"], "cancelled")
+                    self.assert_parked(printer, stopped, drop=drop, chute=chute)
 
     def test_a_cold_nozzle_and_a_new_print_keep_their_fan(self):
         """The cooldown is for a hot nozzle only, and must never turn the fan off during the next print or after the

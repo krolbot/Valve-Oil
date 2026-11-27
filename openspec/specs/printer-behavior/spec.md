@@ -367,9 +367,17 @@ Valve Oil's cut, purge, cooldown, cleaning, calibration, and cancel helpers MUST
 #### Scenario: Operator cancellation cools the nozzle before parking
 - **WHEN** the operator stops a print with `CANCEL_PRINT`, from Fluidd, the touchscreen, or the console
 - **THEN** the nozzle heater turns off and, with the nozzle at or above 170°C, the part fan runs at full before any park move
-- **AND** the toolhead parks as the vendor cancel does for the printer
+- **AND** the toolhead parks at the waste chute as the next scenario describes
 - **AND** the part fan stays at full through the vendor print end until the nozzle is below 170°C, without holding the G-code queue
 - **AND** a print started since, or an operator fan command, keeps the fan where it set it
+
+#### Scenario: Operator cancellation drops the bed and parks at the chute without homing
+- **WHEN** `CANCEL_PRINT` parks the toolhead, on every supported printer
+- **THEN** with Z homed in Klipper's toolhead, the bed first drops 20 mm, or less where Z's travel ends sooner
+- **AND** with X and Y homed in Klipper's toolhead, the toolhead then moves to the waste chute by the printer's chute approach, within its rear limits, at the height the drop left it
+- **AND** the park follows Klipper's homed axes, not the vendor's own homed flag, so a print resumed after a power loss, whose Z the vendor resume sets without homing, still drops and parks
+- **AND** an axis that isn't homed isn't moved, so without Z homed the toolhead goes to the chute at its height, and without X and Y homed it stays where it is
+- **AND** the park never homes, cuts, wipes, purges, or extrudes
 
 #### Scenario: Error cancellation is motion-free
 - **WHEN** Valve Oil error cancellation executes
