@@ -29,11 +29,20 @@ export async function stopDryRun(box: number, stop: () => unknown) {
 /**
  * Seconds left in a Box's dry, or null when it isn't drying or Valve Oil didn't start it. A record only counts for a
  * dry at its temperature that hasn't run past its end by more than a few minutes, so a stale one from an earlier dry
- * doesn't give a new one a time. Updates every 15 seconds.
+ * doesn't give a new one a time. The time counts down like a kitchen timer, up to the whole minute and never past the
+ * length asked for, so a dry shows that length the moment it starts.
  */
+export function dryLeft(run: DryRun | undefined, c: BoxClimate | undefined, now: number): { left: number; hours: number } | null {
+  if (!c || !c.drying || !run || run.temp !== c.target) return null
+  const total = run.hours * 3600
+  const left = run.start + total - now
+  return left > -300 ? { left: Math.min(total, Math.max(0, Math.ceil(left / 60) * 60)), hours: run.hours } : null
+}
+
+/** dryLeft for a Box, from the clock at each render, which runs again every 15 seconds while the Box dries. */
 export function useDryLeft(c: BoxClimate | undefined): { left: number; hours: number } | null {
   const [runs] = useDbItem<DryRuns>(VALVE_OIL_UI, KEY, {})
-  const [now, setNow] = useState(() => Date.now() / 1000)
+  const [, tick] = useState(0)
   const drying = !!c?.drying
   // A dry another browser started: read the records again when this one sees drying begin.
   const was = useRef(drying)
@@ -43,11 +52,8 @@ export function useDryLeft(c: BoxClimate | undefined): { left: number; hours: nu
   }, [drying])
   useEffect(() => {
     if (!drying) return
-    const t = setInterval(() => setNow(Date.now() / 1000), 15_000)
+    const t = setInterval(() => tick((n) => n + 1), 15_000)
     return () => clearInterval(t)
   }, [drying])
-  const run = c ? runs[c.box] : undefined
-  if (!c || !drying || !run || run.temp !== c.target) return null
-  const left = run.start + run.hours * 3600 - now
-  return left > -300 ? { left: Math.max(0, left), hours: run.hours } : null
+  return dryLeft(c ? runs[c.box] : undefined, c, Date.now() / 1000)
 }
