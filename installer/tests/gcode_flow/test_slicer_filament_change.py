@@ -99,9 +99,9 @@ class SlicerFilamentChangeTests(checks.FlowTestCase):
 
 class HumidBoxFilamentChangeTests(checks.FlowTestCase):
     def test_a_change_to_moisture_sensitive_filament_in_a_humid_box_warns_and_changes_as_usual(self):
-        """A Box at 55 % humidity with PETG in the new tool's slot: vo_box_humidity warns in the console and Fluidd's
-        warnings, and the change cuts once, purges at the chute, and the print completes, as with a dry Box. The
-        check reads only; it must never hold up, pause, or alter a print's tool change."""
+        """With a Box at 55 % humidity and PETG in the new tool's slot, vo_box_humidity warns in the console and
+        Fluidd's warnings, and the change cuts once, purges at the chute, and the print completes, as with a dry Box.
+        The check reads only and must never hold up, pause, or alter a print's tool change."""
         filaments = [slicer.Filament(temperature=220), slicer.Filament(temperature=230, range_high=250)]
         for printer_id in FIRMWARE:
             with self.subTest(printer=printer_id):

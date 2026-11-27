@@ -8,16 +8,20 @@
 # When a print takes a Box slot, at QIDI's Box print start
 # (BOX_PRINT_START EXTRUDER=<tool>) and at each tool change
 # (T_MANAGER T=<tool>, which T0-T15 call), the tool is mapped to its slot as
-# QIDI maps it (value_t<tool>, else slot<tool>). If the slot's filament type
-# takes up moisture (SENSITIVE_TYPES, by the type QIDI's filament list gives
-# it) and its Box's humidity is at or above the warning level, the console
-# says so and a printer warning names the Box, the slot, the filament, and
-# the humidity. Klipper never sees the file's filament list (Moonraker reads
-# that from the file), so slots are checked as QIDI's print start and tool
-# changes take them. The check only reads: the command then runs as it would
-# without Valve Oil, and nothing waits, pauses, or stops for it. A warning
-# stays until the next print starts, its Box's humidity falls below the
-# warning level, or the check is turned off.
+# QIDI maps it, by value_t<tool>. A tool without a mapping takes slot<tool> on
+# firmware with QIDI's multi-color controller (Max 4 01.01.07.01 on, Plus 5,
+# Smart 5), and the external spool on earlier Max 4 firmware, where it isn't
+# checked. If the slot's filament type takes up moisture (SENSITIVE_TYPES, by
+# the type QIDI's filament list gives it) and its Box's humidity is at or
+# above the warning level, the console says so and a printer warning names
+# the Box, the slot, the filament, and the humidity. Klipper never sees the
+# file's filament list (Moonraker reads that from the file), so slots are
+# checked as QIDI's print start and tool changes take them. Outside a print
+# nothing is checked, since QIDI's tool change doesn't run then
+# (box_flow_recovery refuses it). The check only reads. The command then runs
+# as it would without Valve Oil, and nothing waits, pauses, or stops for it.
+# A warning stays until the next print starts, its Box's humidity falls
+# below the warning level, or the check is turned off.
 #
 # Saved variables:
 #   vo_box_humidity_warning    1 (default) checks at print start, 0 doesn't
@@ -61,7 +65,7 @@ SENSITIVE_TYPES = frozenset((
 
 
 def slot_label(slot):
-    """Name a slot the way the QIDI Box card does: slot 5 is 2B."""
+    """Name a slot the way the QIDI Box card does, so slot 5 is 2B."""
     return "%d%s" % (slot // SLOTS_PER_BOX + 1, SLOT_LETTERS[slot % SLOTS_PER_BOX])
 
 
@@ -192,9 +196,15 @@ class BoxHumidity:
         """The Box slot QIDI loads for a tool, or None for the external
         spool or a slot on no connected Box."""
         variables = self._variables()
-        match = re.match(r"^slot(\d+)$",
-                         _text(variables.get("value_t%d" % tool))
-                         or "slot%d" % tool)
+        mapped = _text(variables.get("value_t%d" % tool))
+        if not mapped:
+            # Without its multi-color controller, QIDI's print start sends an
+            # unmapped tool to the external spool (slot16).
+            if self.printer.lookup_object("multi_color_controller",
+                                          None) is None:
+                return None
+            mapped = "slot%d" % tool
+        match = re.match(r"^slot(\d+)$", mapped)
         box_count = _number(variables.get("box_count")) or 0.
         if match is None:
             return None
@@ -265,6 +275,8 @@ class BoxHumidity:
 
     def _take(self, tool, new_print):
         eventtime = self.reactor.monotonic()
+        if not self._printing(eventtime):
+            return
         if new_print or not self.in_print:
             self.checked = set()
             self.alerts = {}

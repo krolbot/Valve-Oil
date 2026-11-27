@@ -1,5 +1,5 @@
 """vo_box_humidity: a print that takes a QIDI Box slot whose filament takes up moisture, while that Box is humid,
-gets a console line and a printer warning, and nothing else: the print's own commands run unchanged, and the module
+gets a console line and a printer warning, and nothing else. The print's own commands run unchanged, and the module
 never heats a Box or starts QIDI's drying."""
 from __future__ import annotations
 
@@ -100,7 +100,7 @@ class Box:
 
     def __init__(self, *, humidity=(52., 30.), variables=None, print_state="printing", dry_state=(0, 0),
                  types_box1=("PETG", "PLA", "PA12-CF", "TPU"), filament_info=True, config_file=None,
-                 broken_status=False):
+                 broken_status=False, controller=True):
         self.gcode = GCode()
         self.ran = []
         for name in ("BOX_PRINT_START", "T_MANAGER"):
@@ -123,6 +123,9 @@ class Box:
             "aht20_f heater_box2": self.sensors[1],
             "heater_generic heater_box1": Status({"target": 0.}),
         }
+        if controller:
+            # QIDI's multi-color controller, on the Max 4 from 01.01.07.01 and on the Plus 5 and Smart 5.
+            objects["multi_color_controller"] = Status({})
         if broken_status:
             objects["aht20_f heater_box1"] = types.SimpleNamespace(get_status=lambda eventtime: 1 / 0)
         self.printer = Printer(objects, config_file)
@@ -231,12 +234,31 @@ class BoxHumidityTests(QuietTestCase):
         self.assertEqual(len(box.gcode.responses), 1)
         self.assertEqual(len(box.ran), 6)
 
+    def test_a_tool_change_outside_a_print_says_nothing(self):
+        """QIDI's tool change doesn't run outside a print (box_flow_recovery refuses it), so T0-T15 there never warn."""
+        box = Box(print_state="standby")
+        box.run("T_MANAGER T=0")
+        self.assertEqual((box.gcode.responses, box.warnings()), ([], []))
+        self.assertEqual([name for name, _ in box.ran], ["T_MANAGER"])
+
+    def test_a_tool_without_a_mapping_is_checked_only_where_qidi_loads_the_same_numbered_slot(self):
+        """QIDI's multi-color controller loads slot<tool> for a tool without a mapping. Earlier Max 4 firmware loads
+        the external spool, which has no humidity sensor."""
+        for controller in (True, False):
+            with self.subTest(controller=controller):
+                box = Box(controller=controller)
+                del box.variables["value_t2"]   # 1C, PA12-CF
+                box.run("T_MANAGER T=2")
+                self.assertEqual(bool(box.warnings()), controller)
+                self.assertEqual([name for name, _ in box.ran], ["T_MANAGER"])
+
     def test_warning_lasts_until_the_box_dries_or_the_next_print_starts(self):
         box = Box()
         box.run("BOX_PRINT_START EXTRUDER=0")
         box.print_stats.status["state"] = "complete"
         box.tick(5.)
         self.assertTrue(box.warnings())
+        box.print_stats.status["state"] = "printing"
         box.run("BOX_PRINT_START EXTRUDER=1")
         self.assertEqual(box.warnings(), [])
 
