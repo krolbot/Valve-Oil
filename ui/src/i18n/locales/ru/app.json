@@ -118,8 +118,7 @@
     "now": "сейчас",
     "minutes_back": "−{{m}} мин",
     "seconds_ago": "{{s}} с назад",
-    "aria": "История температур",
-    "window_short": "{{m}} мин"
+    "aria": "История температур"
   },
   "mini_console": {
     "title": "Консоль",

@@ -134,10 +134,26 @@
     "save_menu": "Guardar…"
   },
   "temps": {
-    "hide_line": "Ocultar {{name}} en el gráfico",
-    "show_line": "Mostrar {{name}} en el gráfico",
-    "power": "{{pct}}% de potencia",
+    "chart": "Gráfico",
+    "chart_for": "Abrir el gráfico de {{name}}",
+    "col_heater": "Calentador",
+    "col_now": "Ahora",
+    "col_target": "Objetivo",
+    "col_trend": "Tendencia",
+    "power": "Potencia",
+    "window": "Tiempo mostrado",
+    "heaters": "Calentadores",
+    "printer": "Impresora",
+    "humidity": "Humedad",
+    "humidity_note": "Humedad {{pct}}%",
+    "box_heater_side": "Calentador {{side}}",
+    "chamber_protection": "Protección de la cámara",
+    "trend_holding": "estable",
+    "trend_steady": "sin cambio",
+    "trend_rate": "{{rate}}°/min",
     "target_hint": "Escribe un objetivo para {{name}} y pulsa Enter. 0 lo apaga.",
-    "fan_title": "{{name}}: ventilador {{pct}}%, objetivo {{target}}°"
+    "fan_title": "{{name}}: ventilador {{pct}}%, objetivo {{target}}°",
+    "line_title": "{{name}}: toca para mostrarla o resaltarla, toca dos veces para ocultarla",
+    "legend_hint": "Toca una línea para mostrarla, otra vez para resaltarla, y dos veces seguidas para ocultarla."
   }
 }

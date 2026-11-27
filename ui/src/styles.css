@@ -45,6 +45,15 @@
   --series-6: #008300;
   --series-7: #6250d6;
   --series-8: #e34948;
+  /* Sensors on the full temperature chart. */
+  --series-9: #1f8ea3;
+  --series-10: #7d8420;
+  --series-11: #9b4dbf;
+  --series-12: #4a7fb5;
+  --series-13: #b5588f;
+  --series-14: #a88a00;
+  --series-15: #4f8a63;
+  --series-16: #c06a2e;
   color-scheme: light;
 }
 .dark {
@@ -85,6 +94,14 @@
   --series-6: #008300;
   --series-7: #9085e9;
   --series-8: #e66767;
+  --series-9: #4fb6c8;
+  --series-10: #b0b84a;
+  --series-11: #c27be0;
+  --series-12: #7fb0e0;
+  --series-13: #e0a3c8;
+  --series-14: #d9c25a;
+  --series-15: #8fbf9f;
+  --series-16: #e39a6b;
   color-scheme: dark;
 }
 

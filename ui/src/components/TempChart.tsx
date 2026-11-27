@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePrinter } from '../state/printer'
 import { prettyName } from '../lib/format'
 import { t } from '../i18n'
-import { bucketPoints } from './temp-chart-points'
+import { bucketPoints, chartRange } from './temp-chart-points'
 
 // Series colors come from --series-N in fixed order; an entity keeps its slot whatever is hidden.
 const SLOTS = 8
@@ -27,16 +27,12 @@ const swatch = (slot: number, w: number) => <svg width={w} height="4" aria-hidde
 // Windows in seconds, labelled in minutes.
 const WINDOWS = [300, 600, 1200]
 
-/**
- * The heater history chart. `bare` drops the card, title, and legend for a card that lists the heaters itself; it then
- * takes which series are hidden from `hidden`, and puts the time range on the chart.
- */
-export function TempChart({ className = '', bare, hidden: hiddenProp }: { className?: string; bare?: boolean; hidden?: Set<string> }) {
+/** The heater history chart, with a legend that shows and hides each heater. */
+export function TempChart({ className = '' }: { className?: string }) {
   const series = useSeries()
   const temps = usePrinter((s) => s.temps)
   const live = usePrinter((s) => Object.fromEntries(series.map((x) => [x.obj, { t: s.status[x.obj]?.temperature as number | undefined, target: s.status[x.obj]?.target as number | undefined }])))
-  const [ownHidden, setHidden] = useState<Set<string>>(new Set())
-  const hidden = hiddenProp ?? ownHidden
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
   const [win, setWin] = useState(600)
   const [hover, setHover] = useState<number | null>(null)
   const box = useRef<HTMLDivElement>(null)
@@ -68,7 +64,7 @@ export function TempChart({ className = '', bare, hidden: hiddenProp }: { classN
     [series, temps, n],
   )
 
-  const pad = { l: 34, r: 10, t: bare ? 34 : 8, b: 20 }
+  const pad = { l: 34, r: 10, t: 8, b: 20 }
   const W = size.w
   const H = size.h
   const iw = W - pad.l - pad.r
@@ -85,10 +81,7 @@ export function TempChart({ className = '', bare, hidden: hiddenProp }: { classN
           if (v > hi) hi = v
         }
   if (lo > hi) [lo, hi] = [20, 40]
-  const step = [5, 10, 20, 25, 50, 100].find((s) => s >= Math.max(hi - lo, 6) / 3) ?? 100
-  const bottom = Math.max(0, Math.floor(lo / step) * step)
-  // A reading a little over a gridline, like a bed overshooting 100°, runs into the top padding instead of adding a step.
-  const top = Math.max(bottom + 2 * step, Math.ceil((hi - step / 10) / step) * step)
+  const { bottom, top, step } = chartRange(lo, hi, 3, [5, 10, 20, 25, 50, 100])
   // Until the window fills, the history sits at its right end.
   const offset = n < win ? ((win - n) / (win - 1)) * iw : 0
   const xAt = (i: number) => pad.l + (n <= 1 ? iw : (i / (win - 1)) * iw) + offset
@@ -121,43 +114,39 @@ export function TempChart({ className = '', bare, hidden: hiddenProp }: { classN
     <div className="ml-auto flex gap-0.5 rounded-lg bg-canvas p-0.5 shadow-[inset_0_0_0_1px_var(--line)]">
       {WINDOWS.map((w) => (
         <button key={w} onClick={() => setWin(w)} className={`rounded-md border-0 px-2 py-0.5 text-[11.5px] font-medium ${win === w ? 'bg-surface text-ink shadow-[var(--shadow-btn)]' : 'bg-transparent text-ink-3'}`}>
-          {bare ? t('app.chart.window_short', { m: w / 60 }) : t('common.time.minutes', { m: w / 60 })}
+          {t('common.time.minutes', { m: w / 60 })}
         </button>
       ))}
     </div>
   )
-  const Outer = bare ? 'div' : 'section'
   return (
-    <Outer className={`${bare ? '' : 'card'} flex flex-col ${className}`}>
-      {bare ? null : (
-        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <h3 className="card-title m-0!">{t('app.chart.title')}</h3>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            {series.map((x) => {
-              const off = hidden.has(x.obj)
-              const l = live[x.obj]
-              return (
-                <button
-                  key={x.obj}
-                  type="button"
-                  aria-pressed={!off}
-                  title={off ? t('app.chart.show', { name: x.label }) : t('app.chart.hide', { name: x.label })}
-                  onClick={() => setHidden((h) => new Set(h.has(x.obj) ? [...h].filter((o) => o !== x.obj) : [...h, x.obj]))}
-                  className={`flex items-center gap-1.5 rounded-md border-0 bg-transparent px-1 py-0.5 text-[12px] hover:bg-hover ${off ? 'opacity-40' : ''}`}
-                >
-                  {swatch(x.slot, 14)}
-                  <span className="text-ink-2">{x.label}</span>
-                  <span className="num font-semibold text-ink">{l?.t != null ? `${Math.round(l.t)}°` : '—'}</span>
-                  {l?.target ? <span className="num text-ink-3">/{Math.round(l.target)}</span> : null}
-                </button>
-              )
-            })}
-          </div>
-          {windows}
+    <section className={`card flex flex-col ${className}`}>
+      <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <h3 className="card-title m-0!">{t('app.chart.title')}</h3>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {series.map((x) => {
+            const off = hidden.has(x.obj)
+            const l = live[x.obj]
+            return (
+              <button
+                key={x.obj}
+                type="button"
+                aria-pressed={!off}
+                title={off ? t('app.chart.show', { name: x.label }) : t('app.chart.hide', { name: x.label })}
+                onClick={() => setHidden((h) => new Set(h.has(x.obj) ? [...h].filter((o) => o !== x.obj) : [...h, x.obj]))}
+                className={`flex items-center gap-1.5 rounded-md border-0 bg-transparent px-1 py-0.5 text-[12px] hover:bg-hover ${off ? 'opacity-40' : ''}`}
+              >
+                {swatch(x.slot, 14)}
+                <span className="text-ink-2">{x.label}</span>
+                <span className="num font-semibold text-ink">{l?.t != null ? `${Math.round(l.t)}°` : '—'}</span>
+                {l?.target ? <span className="num text-ink-3">/{Math.round(l.target)}</span> : null}
+              </button>
+            )
+          })}
         </div>
-      )}
+        {windows}
+      </div>
       <div ref={box} className="relative min-h-[150px] flex-1">
-        {bare && <div className="absolute top-0 right-0 z-[1]">{windows}</div>}
         <svg width={W} height={H} className="absolute inset-0 block touch-none" onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img" aria-label={t('app.chart.aria')}>
           {Array.from({ length: (top - bottom) / step + 1 }, (_, i) => bottom + i * step).map((v) => (
             <g key={v}>
@@ -215,6 +204,6 @@ export function TempChart({ className = '', bare, hidden: hiddenProp }: { classN
           </div>
         )}
       </div>
-    </Outer>
+    </section>
   )
 }

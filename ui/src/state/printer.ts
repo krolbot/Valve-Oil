@@ -12,7 +12,7 @@ export type Status = Record<string, Record<string, any>>
 export type ConsoleLine = { id: number; time: number; text: string; kind: 'command' | 'response' | 'error'; origin: 'live' | 'history' }
 
 /** `end` counts every sample this page has had for the series, so the chart can tell samples apart as old ones drop off. */
-export type TempSeries = { temperatures: number[]; targets?: number[]; end?: number }
+export type TempSeries = { temperatures: number[]; targets?: number[]; powers?: number[]; end?: number }
 
 export type HostStats = {
   cpuTemp: number | null
@@ -220,7 +220,7 @@ function mergeFields(obj: string, prev: Record<string, unknown> | undefined, nex
 }
 
 // ---- temperature history: Moonraker keeps 20 min at 1 s; we append once a second ----
-const TEMP_POINTS = 1200
+export const TEMP_POINTS = 1200
 setInterval(() => {
   const s = printer.get()
   if (s.klippy !== 'ready') return
@@ -236,6 +236,7 @@ setInterval(() => {
     temps[name] = {
       temperatures: [...series.temperatures.slice(-(TEMP_POINTS - 1)), st.temperature],
       targets: series.targets && typeof st.target === 'number' ? [...series.targets.slice(-(TEMP_POINTS - 1)), st.target] : series.targets,
+      powers: series.powers && typeof st.power === 'number' ? [...series.powers.slice(-(TEMP_POINTS - 1)), st.power] : series.powers,
       end: (series.end ?? series.temperatures.length) + 1,
     }
   }
@@ -322,7 +323,12 @@ async function initKlippy() {
       querySettings().catch(() => null),
     ])
     if (stale()) return
-    const temps = Object.fromEntries(objects.filter(isTempObject).map((o) => [o, { temperatures: [], ...(typeof printer.get().status[o]?.target === 'number' ? { targets: [] } : {}) }]))
+    const temps = Object.fromEntries(
+      objects.filter(isTempObject).map((o) => {
+        const st = printer.get().status[o]
+        return [o, { temperatures: [], ...(typeof st?.target === 'number' ? { targets: [] } : {}), ...(typeof st?.power === 'number' ? { powers: [] } : {}) }]
+      }),
+    )
     printer.set((s) => ({ ...s, klippy: 'ready', klippyMessage: '', temps, ...(q ? settingsFrom(q) : { commands: [], heaterSettings: {}, settings: {} }) }))
     if (!q) retrySettings(stale)
     saveSnapshot()
