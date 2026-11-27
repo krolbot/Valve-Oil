@@ -34,6 +34,10 @@
 # too cold for ASA, ABS, PC, or nylon. Checked at most every FILAMENT_POLL
 # seconds.
 #
+# Also says when a print took a Box slot whose filament takes up moisture
+# while that Box was humid, from vo_box_humidity
+# (installer/klipper/extras/box_humidity.py).
+#
 # Also says when a USB Box connected or disconnected while the printer was
 # busy: Valve Oil's Box monitor (installer/system/vo_box_monitor.py) then
 # leaves box.cfg and Klipper as they are until the printer is idle, and says so
@@ -303,6 +307,11 @@ class PrinterWarnings:
                        " the touchscreen." % ", ".join(ids),
         }]
 
+    def _box_humidity(self):
+        monitor = self.printer.lookup_object("vo_box_humidity", None)
+        warnings = getattr(monitor, "printer_warnings", None)
+        return warnings() if callable(warnings) else []
+
     def _klipper(self, eventtime):
         switch = self.printer.lookup_object("vo_klipper", None)
         reason = switch.fallback(eventtime) if switch is not None else None
@@ -550,6 +559,7 @@ class PrinterWarnings:
             warnings = (self._step_loss() + self._input_shaper()
                         + self._box_firmware() + self._klipper(eventtime)
                         + self._unknown_filament(eventtime)
+                        + self._box_humidity()
                         + self._pending_work(eventtime))
         except Exception:
             if not self.failed:

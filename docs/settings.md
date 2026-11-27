@@ -23,6 +23,8 @@ Before 26.11.18.2 these were named `tltg_` instead of `vo_`, for example `tltg_k
 | [`vo_step_loss_recovery`](tools.md#correcting-the-position-after-a-slip) | `0` | With the step-loss monitor on, `1` corrects the toolhead position after a print's first slip and keeps printing instead of pausing. Max 4 only. |
 | [`vo_resonance_sweep`](tools.md#input-shaper-calibration) | `1` | `0` runs QIDI's resonance test for input shaper calibration instead of the newer sweeping one. |
 | [`vo_box_spool_roll`](qidi-box.md#turning-spools-while-the-box-heats) | `0` | `1` turns the spools of empty QIDI Box slots every 5 minutes while the Box heater is on. |
+| [`vo_box_humidity_warning`](qidi-box.md#box-humidity) | `1` | `0` stops the console line and printer warning when a print takes a QIDI Box slot whose filament takes up moisture while that Box is humid. |
+| [`vo_box_humidity_threshold`](qidi-box.md#box-humidity) | `40` | QIDI Box humidity in %, from `10` to `90`, at or above which that warning comes. |
 | [`vo_box_fan_threshold`](qidi-box.md#box-fans-on-a-warm-printer) | `35` | Box air temperature in °C, from `35` to `45`, above which USB QIDI Box circulation fans run. |
 | [`vo_box_fan_hysteresis`](qidi-box.md#box-fans-on-a-warm-printer) | `0.5` | How far in °C, from `0` to `2`, the Box air falls below `vo_box_fan_threshold` before the fans start their minute's run-on. |
 | [`vo_box_heater_pwm_cycle_time`](qidi-box.md#box-heater-switching-speed) | `0.1` | Seconds per on-off cycle of each USB QIDI Box heater, from `0.01` to `0.1`. Shorter can stop lights flickering. Takes effect when Klipper next restarts. |
@@ -36,6 +38,7 @@ Before 26.11.18.2 these were named `TLTG_` instead of `VO_`, and several print m
 | [`VO_KLIPPER [USE=VALVE_OIL\|QIDI]`](klipper.md#turning-it-on-and-off) | Says which Klipper is chosen and running, or switches between QIDI's Klipper and Valve Oil's, restarting Klipper. Not during a print. |
 | [`VO_BOX_MOTION`](qidi-box.md#load-and-unload-speed) | Shows or sets QIDI Box load and unload speeds, for all slots or one. |
 | [`VO_BOX_SLOT_JOG SLOT= DISTANCE=`](qidi-box.md#moving-a-slot-by-hand) | Moves a QIDI Box slot's filament in or out by a set distance. |
+| [`VO_BOX_HUMIDITY`](qidi-box.md#box-humidity) | Shows each QIDI Box's humidity and temperature, how long it has been at or above the warning level, and the humidity warning settings. |
 | [`VO_BOX_RFID_REPORT SLOT= [SECONDS=]`](qidi-box.md#spools-that-dont-read) | Reads the spool tag in a QIDI Box slot into a report you can share. Needs the Valve Oil Box firmware. Before 26.11.16.1 it was `TLTG_BOX_RFID_REPORT`, which still works. |
 | [`VO_BOX_RFID_WRITE SLOT= [FILAMENT=] [COLORS=] [NAME=0] [SECONDS=]`](qidi-box.md#writing-spool-tags) | Writes a filament to the spool tag in a QIDI Box slot, turning an empty slot's spool until the tag comes past. Needs the Valve Oil Box firmware. |
 | [`VO_BOX_RFID_TEST SLOT= ACTION=SCAN\|WRITE`](qidi-box.md#writing-spool-tags) | Diagnostic: lists the tags a QIDI Box reader sees, or writes one with every option. |
