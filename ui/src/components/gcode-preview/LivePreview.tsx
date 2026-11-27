@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Maximize2 } from 'lucide-react'
 import { href } from '../../lib/router'
 import { fmtBytes } from '../../lib/format'
-import { useFileMeta } from '../../state/files'
+import { useFileMeta, useGcodesFile } from '../../state/files'
 import { usePrinter } from '../../state/printer'
 import { isActive } from '../../state/job'
 import { useAutoLoad, usePreviewFile } from './loader'
@@ -25,8 +25,12 @@ export function LivePreview({ className = 'aspect-square' }: { className?: strin
   const filename = usePrinter((s) => s.status.print_stats?.filename ?? '')
   const state = usePrinter((s) => s.status.print_stats?.state ?? 'standby')
   const active = !!filename && isActive(state)
-  const path = active ? filename : null
+  // A print QIDI's power-loss resume restarted names its copy of the file outside the gcodes root.
+  const found = useGcodesFile(active ? filename : null)
+  const path = found ?? null
   const meta = useFileMeta(path)
+  // Without the file in the gcodes root, or its metadata, there's nothing to load: say so rather than wait at 0%.
+  const missing = active && (found === null || meta === null)
   const [asked, setAsked] = useState(false)
   const big = (meta?.size ?? 0) > AUTO_LOAD_BYTES
   useAutoLoad(path, meta?.size, meta?.modified, !big || asked)
@@ -39,7 +43,13 @@ export function LivePreview({ className = 'aspect-square' }: { className?: strin
   const print = usePrintFollow(path)
   const toolhead = useMemo(() => (print.x != null && print.y != null ? { x: print.x, y: print.y } : null), [print.x, print.y])
 
-  if (!path) return null
+  if (!active) return null
+  if (missing || !path)
+    return (
+      <div className={`relative overflow-hidden rounded-xl bg-canvas ${className}`} style={{ boxShadow: 'inset 0 0 0 1px var(--line)' }}>
+        <div className="absolute inset-0 grid place-items-center p-4 text-center text-[12.5px] text-ink-3">{missing ? t('preview.live.no_file') : null}</div>
+      </div>
+    )
   const layer = data && layers.length ? layerByFilePosition(layers, print.filePosition) : 0
   const moveEnd = data ? moveIndexByFilePosition(data.moves, print.filePosition) : 0
   const link = href('files', 'preview', ...path.split('/'))

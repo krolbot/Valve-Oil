@@ -10,6 +10,10 @@
 // While the printing scenario runs, virtual_sdcard.file_position follows its progress through the planter's G-code,
 // and print_stats.info.current_layer, the toolhead, and exclude_object.current_object follow the line at that
 // position. EXCLUDE_OBJECT NAME=<name> excludes an object. `--gcode-kbps <n>` limits file downloads to n KB/s.
+//
+// `--resumed` runs the printing scenario as QIDI's power-loss resume leaves it: print_stats.filename names QIDI's
+// copy of the file, /home/qidi/printer_data/.cache/<name>, which Moonraker has no metadata for and won't serve, and
+// history holds the interrupted job of the file in the gcodes root before it.
 import { crc32, deflateRawSync } from 'node:zlib'
 
 const BED = { x: 390, y: 390 }
@@ -320,10 +324,18 @@ function file(path) {
 
 export function install(fake) {
   const kbps = Number(fake.args['gcode-kbps']) || 0
+  const resumed = 'resumed' in fake.args
+  // QIDI's copy of a file in ~/printer_data/.cache/ is the same file as the one of that name in the gcodes root.
+  const own = (path) => (path.startsWith('/') ? path.slice(path.lastIndexOf('/') + 1) : path)
   fake.http(async (req, res, path) => {
     if (req.method !== 'GET' || !path.startsWith('/server/files/gcodes/') || path.includes('/.thumbs/')) return false
     const name = path.slice('/server/files/gcodes/'.length)
     if (!/\.gcode(\.3mf)?$/i.test(name)) return false
+    // As Moonraker refuses a path outside the root: /server/files/gcodes//home/qidi/printer_data/.cache/<name>.
+    if (name.startsWith('/')) {
+      res.writeHead(403, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: { code: 403, message: 'Forbidden' } }))
+      return true
+    }
     const { body } = file(name)
     res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': body.length, 'Access-Control-Expose-Headers': 'Content-Length' })
     // Sent in pieces with short pauses, so the download progress shows as it would over Wi-Fi; --gcode-kbps slows it
@@ -354,13 +366,22 @@ export function install(fake) {
 
   const objectsOf = (path) =>
     path && /\.gcode(\.3mf)?$/i.test(path)
-      ? file(path).objects.map((o) => {
+      ? file(own(path)).objects.map((o) => {
           const poly = outline(o, 0).filter((_, i, a) => a.length < 20 || i % 4 === 0)
           return { name: o.name.toUpperCase(), center: [r3(o.cx), r3(o.cy)], polygon: poly.map(([px, py]) => [r3(px), r3(py)]) }
         })
       : []
 
   fake.status((st, scenario) => {
+    if (resumed && scenario === 'printing') {
+      const name = st.print_stats.filename
+      st.print_stats.filename = `/home/qidi/printer_data/.cache/${name}`
+      const h = fake.state.history
+      if (!h.some((j) => j.job_id === '0fffff')) {
+        const start = fake.now() - 6 * 3600
+        h.unshift({ job_id: '0fffff', user: '_TRUSTED_USER_', filename: name, status: 'interrupted', start_time: start, end_time: start + 3000, print_duration: 2900, total_duration: 3000, filament_used: 4100, metadata: {}, auxiliary_data: [], exists: true })
+      }
+    }
     st.exclude_object = scenario === 'printing' ? { objects: objectsOf(st.print_stats.filename), excluded_objects: [], current_object: null } : { objects: [], excluded_objects: [], current_object: null }
   })
 
@@ -388,7 +409,7 @@ export function install(fake) {
       lastFile = ps.filename
     }
     if (ps.state !== 'printing' && ps.state !== 'paused') return
-    const f = file(ps.filename)
+    const f = file(own(ps.filename))
     const position = Math.round((st.virtual_sdcard.progress ?? 0) * f.size)
     let lo = 0
     let hi = f.track.length - 1

@@ -30,6 +30,17 @@
     "last_failed": "Last print, failed {{ago}}",
     "empty": "Upload a file or send one from your slicer."
   },
+  "power_loss": {
+    "title": "Print interrupted",
+    "stopped": "Stopped at layer {{layer}} when the printer lost power.",
+    "resume": "Resume print",
+    "resume_title": "Resume this print?",
+    "resume_body": "The printer heats up and carries on from layer {{layer}}. Check that the part is still on the bed and nothing is in the way of the toolhead.",
+    "busy": "The printer can't resume this print now. Wait until Klipper is ready and no print is running or paused.",
+    "discard": "Discard",
+    "discard_title": "Discard this print?",
+    "discard_body": "The printer won't offer to resume it again, here or on its screen."
+  },
   "recent": {
     "title": "Recent files",
     "all": "All files",

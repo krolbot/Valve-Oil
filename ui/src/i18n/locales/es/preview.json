@@ -49,7 +49,8 @@
   },
   "live": {
     "open": "Abrir la vista previa del G-code",
-    "file_size": "El archivo ocupa {{size}}."
+    "file_size": "El archivo ocupa {{size}}.",
+    "no_file": "El archivo que se imprime no está entre los archivos G-code, así que no se pueden mostrar sus capas."
   },
   "load": {
     "downloading": "Descargando",

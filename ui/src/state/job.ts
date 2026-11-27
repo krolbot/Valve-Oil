@@ -38,7 +38,7 @@ export function jobProgress(job: Job): number {
  * Remaining seconds. Early on the slicer's estimate is the better guide; later the file-based
  * extrapolation catches up with how this printer actually runs. Blend the two by progress.
  */
-export function remainingSeconds(job: Job, meta: FileMeta | null): number | null {
+export function remainingSeconds(job: Job, meta: FileMeta | null | undefined): number | null {
   const p = jobProgress(job)
   const t = job.printDuration
   const slicer = meta?.estimated_time ? Math.max(0, meta.estimated_time - t) : null

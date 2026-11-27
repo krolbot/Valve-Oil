@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { usePrinter } from '../../state/printer'
 import { useTheme } from '../../lib/theme'
 import { isActive, type JobState } from '../../state/job'
-import type { FileMeta } from '../../state/files'
+import { useGcodesFile, type FileMeta } from '../../state/files'
 import { getBounds, getExtrusionColors, getLayers, getToolColors } from './model'
 import type { BBox, Layer, ParsedGcode } from './types'
 import type { PreviewSettings } from './settings'
@@ -61,7 +61,8 @@ export function usePrintFollow(path: string | null) {
   const exclude = usePrinter((s) => s.status.exclude_object)
   const klippyReady = usePrinter((s) => s.klippy === 'ready')
   const active = isActive(job.state)
-  const isPrinterFile = !!path && active && job.filename === path
+  const printing = useGcodesFile(active ? job.filename : null)
+  const isPrinterFile = !!path && active && printing === path
   const objects = useMemo<ExcludeObject[] | null>(() => {
     // As in Fluidd: Klipper's objects replace the file's parts only while this file is the one printing.
     if (!isPrinterFile || !klippyReady || !exclude?.objects?.length) return null

@@ -3,7 +3,7 @@ import { ArrowLeft, RotateCw } from 'lucide-react'
 import { Empty, PageHeader } from '../components/ui'
 import { href } from '../lib/router'
 import { displayName, fmtBytes } from '../lib/format'
-import { fetchMeta, type FileMeta } from '../state/files'
+import { fetchMeta, useGcodesFile, type FileMeta } from '../state/files'
 import { useConnected, usePrinter } from '../state/printer'
 import { isActive } from '../state/job'
 import { parentOf } from '../components/files/fs'
@@ -18,7 +18,8 @@ import '../components/gcode-preview/preview.css'
 export function GcodePreview({ path }: { path: string }) {
   const filesRev = usePrinter((s) => s.filesRev)
   const open = useConnected()
-  const printing = usePrinter((s) => s.status.print_stats?.filename === path && isActive(s.status.print_stats?.state))
+  const printingFile = usePrinter((s) => (isActive(s.status.print_stats?.state) ? s.status.print_stats?.filename : null))
+  const printing = useGcodesFile(printingFile) === path
   // undefined while loading, null when Moonraker doesn't know the file.
   const [meta, setMeta] = useState<FileMeta | null | undefined>(undefined)
   useEffect(() => {

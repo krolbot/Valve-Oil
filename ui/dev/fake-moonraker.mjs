@@ -20,8 +20,8 @@ import { WebSocketServer } from 'ws'
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1]]] : acc), []))
 const PORT = Number(args.port ?? 7125)
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url))
-// With only --updates given, the printer starts idle so Update now is available.
-let scenario = args.scenario ?? (args.updates ? 'idle' : 'printing')
+// With only --updates or --power-loss given, the printer starts idle, so Update now or the resume is available.
+let scenario = args.scenario ?? (args.updates || 'power-loss' in args ? 'idle' : 'printing')
 
 // ---------- printer model ----------
 const FILAMENTS = {
