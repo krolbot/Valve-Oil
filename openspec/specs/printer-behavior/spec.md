@@ -1182,6 +1182,36 @@ While a USB QIDI Box heater has a nonzero target and the saved variable `vo_box_
 - **THEN** the slot motor is handed back to the vendor Box code, disabled again if it was disabled
 - **AND** a motor the vendor Box code took during the turn stays enabled and gets its vendor kinematics back once the vendor's moves have run
 
+### Requirement: QIDI Box humidity warning
+When a print's vendor Box print start (`BOX_PRINT_START EXTRUDER=`) or tool change (`T_MANAGER T=`) takes a QIDI Box slot whose filament type takes up moisture, while that Box's `aht20_f heater_box<N>` humidity is at or above `vo_box_humidity_threshold`, Valve Oil configuration SHALL warn in the console and as a printer warning, unless `vo_box_humidity_warning` is `0`. The vendor command SHALL run unchanged, and the check SHALL NOT wait, pause, stop, heat, or start drying.
+
+#### Scenario: Moisture-sensitive filament in a humid Box
+- **WHEN** a print's tool change takes slot 1C, whose filament type is PETG, while Box 1 reads 52 % humidity with the default warning level
+- **THEN** the console and the printer warnings name Box 1, 1C, the filament, and 52 %
+- **AND** the tool change and the print run as they would without the check
+
+#### Scenario: No warning
+- **WHEN** the slot's filament type is PLA, ABS, or ASA, the Box reads below the warning level, the tool prints from the external spool, the tool change comes outside a print, or `vo_box_humidity_warning` is `0`
+- **THEN** nothing is said and no printer warning is raised
+
+### Requirement: QIDI Box humidity warning slots and filament types
+The humidity warning SHALL map a tool to its slot by `value_t<tool>`. A tool without a mapping SHALL map to `slot<tool>` where the vendor `multi_color_controller` is loaded, and to the external spool otherwise, which SHALL NOT be checked. A filament type takes up moisture when its family, the part of the vendor filament type before its first dash or space, is PA, PA6, PA11, PA12, PAHT, PPA, UltraPA, PET, PETG, TPU, TPE, TPEE, PEBA, PVA, BVOH, PC, or PPS.
+
+#### Scenario: Unmapped tool without the multi-color controller
+- **WHEN** a print's tool change takes a tool with no `value_t<tool>` on firmware without the vendor `multi_color_controller`
+- **THEN** the tool is taken as the external spool and nothing is checked
+
+#### Scenario: Filament kinds share their family
+- **WHEN** the slot's filament type is PETG-CF, PA12-CF, or TPU-AERO 64D in a humid Box
+- **THEN** it warns as PETG, PA12, or TPU would
+
+### Requirement: QIDI Box humidity warning level, lifetime, and report
+The warning level SHALL be the saved variable `vo_box_humidity_threshold` from 10 to 90 % RH, and 40 otherwise. A humidity warning SHALL last until the next print start, until that Box's humidity falls below the warning level, or until the check is turned off. `VO_BOX_HUMIDITY` SHALL report each Box's humidity, temperature, time at or above the warning level, and drying state, and both settings.
+
+#### Scenario: Box dries after the print
+- **WHEN** a print raised a humidity warning for Box 1 and Box 1 then reads below the warning level
+- **THEN** the warning is gone
+
 ### Requirement: Klipper main-loop health
 Valve Oil's configuration SHALL unregister the vendor Box load-cell timers (`_read_wei_timer`, `_init_probe_data_advance`) once they are stopped and the vendor object no longer holds them, and SHALL leave every other timer registered. It SHALL warn when Klipper's timers pile up or its main loop stays saturated, SHALL report Klipper's recent load when an endstop sync fails, and SHALL log MCU commands that Klipper sends too late to take effect on time.
 

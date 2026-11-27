@@ -6,7 +6,7 @@ from __future__ import annotations
 import unittest
 from dataclasses import dataclass
 
-from installer.tests.gcode_flow import checks, slicer
+from installer.tests.gcode_flow import checks, hardware, slicer
 from installer.tests.gcode_flow.printer import FIRMWARE, FlowPrinter
 from installer.tests.gcode_flow.qidi import BoxSetup
 
@@ -95,6 +95,34 @@ class SlicerFilamentChangeTests(checks.FlowTestCase):
                         self.assertEqual(printer.toolhead.moves[-1].end[:2],
                                          (job.resume_xy[0] + 5, job.resume_xy[1]))
                         self.assertEqual(printer.status("extruder")["target"], filaments[1].temperature)
+
+
+class HumidBoxFilamentChangeTests(checks.FlowTestCase):
+    def test_a_change_to_moisture_sensitive_filament_in_a_humid_box_warns_and_changes_as_usual(self):
+        """With a Box at 55 % humidity and PETG in the new tool's slot, vo_box_humidity warns in the console and
+        Fluidd's warnings, and the change cuts once, purges at the chute, and the print completes, as with a dry Box.
+        The check reads only and must never hold up, pause, or alter a print's tool change."""
+        filaments = [slicer.Filament(temperature=220), slicer.Filament(temperature=230, range_high=250)]
+        for printer_id in FIRMWARE:
+            with self.subTest(printer=printer_id):
+                box = BoxSetup(boxes=1, enable_box=1, tools={0: "slot0", 1: "slot1"}, loaded_slot="slot0",
+                               current_tool=0)
+                # QIDI's filament list has PETG Basic as ID 39, which earlier firmware saves for the slot.
+                printer = FlowPrinter(printer_id, box=box, variables={"filament_slot1": 39})
+                printer.objects["aht20_f heater_box1"] = hardware.StatusOnly({"humidity": 55., "temperature": 30.})
+                job = slicer.print_with_change("orca", printer_id, filaments=filaments, current=0, following=1)
+                printer.start_print(job.text)
+
+                checks.assert_no_errors(self, printer)
+                self.assertEqual(printer.status("print_stats")["state"], "complete")
+                self.assertEqual(checks.cuts(printer), 1)
+                first = printer.moves_from_line(job.change_line)
+                checks.assert_purges_only_at_the_chute(
+                    self, printer, first, printer.moves_from_line(job.change_line + job.change_lines))
+                self.assertTrue(any("Box 1 is at 55 % humidity with PETG Basic (PETG) in 1B" in line
+                                    for line in printer.responses.lines))
+                warnings = printer.status("vo_printer_warnings")["warnings"]
+                self.assertIn("box_humidity_box1", [warning["id"] for warning in warnings])
 
 
 FAILURES = (

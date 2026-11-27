@@ -69,6 +69,35 @@ A print doesn't start while QIDI's timed drying runs on a USB Box, whether it wa
 
 QIDI's drying turns every slot of the Box every 5 minutes, and each turn stops the toolhead for 5 seconds per slot. In a print, that stops the print for about 20 seconds every 5 minutes. A turn that comes while the printer homes or probes shuts Klipper down with `Internal error on command:"RUN_STEPPER"`. Resuming a paused print isn't blocked.
 
+### Box humidity
+
+Each QIDI Box measures the humidity of its air, which the touchscreen, Fluidd's QIDI Box card, and Valve Oil UI show. QIDI calls below 40 % normal, below 60 % high, and anything above that too high.
+
+On the Max 4, Plus 5, and Smart 5 with a QIDI Box, when a print takes a Box slot, at print start and at each tool change, Valve Oil checks the slot's filament. If it's a type that takes up moisture and its Box is at 40 % humidity or above, the console says so:
+
+```text
+Box 1 is at 52 % humidity with Generic PETG (PETG) in 1C, at or above the 40 % warning level. PETG takes up moisture, which can cause stringing, bubbles, and weak parts. The print goes on; dry the filament before printing it again.
+```
+
+Fluidd and Valve Oil UI show the same as a printer warning, **Box 1 is too humid for its filament.**, until that Box's humidity falls below the warning level or the next print starts. It only warns. The print never waits, pauses, or stops for it, and Valve Oil never heats a Box or starts drying by itself. To dry the filament, use **Dry** on the Box card or the touchscreen's drying between prints; see [Printing while a Box dries](#printing-while-a-box-dries).
+
+- Filaments that take up moisture, by the type in QIDI's filament list: nylon (PA, PA6, PA12, PAHT, PPA, UltraPA), PET and PETG, TPU, TPE, TPEE, and PEBA, PVA and BVOH, PC, and PPS, each with its `-CF`, `-GF`, and other kinds. PLA, ABS, and ASA don't warn.
+- The slot is checked when QIDI's print start or tool change takes it, using the tool mapping, not before the print starts. Klipper doesn't see which filaments a file uses.
+- A tool change outside a print, such as `T1` from the console, isn't checked.
+- On the Max 4 before firmware 01.01.07.01, a tool without a mapping prints from the external spool, so it isn't checked.
+- The external spool has no humidity sensor and isn't checked.
+- `SAVE_VARIABLE VARIABLE=vo_box_humidity_threshold VALUE=50` warns at 50 % instead. From `10` to `90`; anything else, or no setting, keeps `40`.
+- `SAVE_VARIABLE VARIABLE=vo_box_humidity_warning VALUE=0` turns the check off, and `VALUE=1` turns it back on. Both settings apply to the next slot a print takes.
+
+`VO_BOX_HUMIDITY` shows each Box's humidity and temperature, how long it has been at or above the warning level, whether it's drying, and both settings:
+
+```text
+Box 1: 52 % humidity, 31.2 °C, at or above the warning level for 35 min
+Box 2: 33 % humidity, 29.0 °C
+Warning level: 40 % (vo_box_humidity_threshold).
+Humidity check at print start: on (vo_box_humidity_warning).
+```
+
 ## Load and unload speed
 
 A load pushes filament from the spool to the Box hub, then fast toward the toolhead, then slowly until the toolhead filament sensor trips. An unload has the extruder pull the filament back, the Box pull it back to the hub, and then back to its parked position.

@@ -1,6 +1,7 @@
 # Changelog
 
 ## 26.11.26.1
+- On the Max 4, Plus 5, and Smart 5 with a QIDI Box, a print that takes a Box slot holding a filament that takes up moisture, such as PETG, nylon, TPU, PC, or PVA, while that Box is at 40 % humidity or above now says so in the console and as a printer warning in Fluidd and Valve Oil UI, naming the Box, the slot, the filament, and the humidity. It checks at print start and at each tool change, and only warns, so the print carries on as before. `vo_box_humidity_threshold` sets the humidity, and `vo_box_humidity_warning` `0` turns it off. `VO_BOX_HUMIDITY` shows each Box's humidity and temperature. See [Box humidity](docs/qidi-box.md#box-humidity).
 - Valve Oil UI's Toolhead card now says the move steps are in millimetres, on the **Step** heading beside Fine, Coarse, and Turbo. The wheel, the Z buttons, and the step buttons showed bare numbers.
 - On Valve Oil UI's Home, Turbo now moves Z by 10 and 50 mm, as its label says. Its larger Z step stopped at 25 mm while X and Y moved 50 mm. Fine and Coarse are unchanged, and the Control screen's Z steps still stop at 25 mm.
 - **Report a problem**, in Valve Oil UI's Updates screen and Fluidd's **Settings → Valve Oil**, now downloads the support bundle first and shows the next steps before it opens GitHub. Once the bundle is saved, the window gives its file name and says to drag it into the issue's **Logs and files**, and **Open the issue on GitHub** opens the form. The form used to open first, with the download landing behind it, and reports kept arriving without the bundle.
