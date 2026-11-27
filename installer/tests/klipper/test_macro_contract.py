@@ -180,7 +180,7 @@ class MacroContractTests(unittest.TestCase):
         calls = {
             "VO_WIPE_NOZZLE_DROP": ["_VO_WIPE_NOZZLE", "_VO_CHUTE_DROP"],
             "_VO_FINISH_START_SCRAPE": ["OPTIMIZED_MOVE_TO_TRASH", "VO_WIPE_NOZZLE_DROP"],
-            "OPTIMIZED_MOVE_TO_TRASH": ["_VO_MOVE_TO_TRASH_MOTION"],
+            "OPTIMIZED_MOVE_TO_TRASH": ["_VO_CHUTE_APPROACH"],
         }
 
         def check(name, start, end):
@@ -197,7 +197,7 @@ class MacroContractTests(unittest.TestCase):
             # Conditions on the toolhead position are evaluated; any other condition runs its block.
             if position is None or "gcode_move.position" not in condition:
                 return True
-            # Z never moves X or Y; at Z0 every lift (such as the cancel park's) is taken.
+            # Z never moves X or Y.
             where = types.SimpleNamespace(x=position[0], y=position[1], z=0.)
             printer = types.SimpleNamespace(gcode_move=types.SimpleNamespace(position=where))
             return bool(eval(condition, {"printer": printer, "km": km}))

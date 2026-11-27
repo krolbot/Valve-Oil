@@ -313,7 +313,7 @@ Forbidden patterns:
 
 Condition: `the operator stops the print from Fluidd, the touchscreen, or the console`
 
-Source: `installer/klipper/macros/cancel.cfg:40-60`
+Source: `installer/klipper/macros/cancel.cfg:40-64`
 
 Direct visible macro calls in branch slice:
 
@@ -340,11 +340,76 @@ Forbidden patterns:
 - `M106 S0`
 - `TEMPERATURE_WAIT`
 
+### cancel_drops_bed_then_chute_without_homing
+
+Condition: `every operator cancel; the bed drops only with Z homed in Klipper, and the toolhead goes to the chute only with X and Y homed`
+
+Source: `installer/klipper/macros/cancel.cfg:68-83`
+
+Direct visible macro calls in branch slice:
+
+- `save_gcode_state`
+- `_VO_CHUTE_APPROACH`
+- `restore_gcode_state`
+
+Ordered invariants:
+
+- `th.axis_maximum.z - th.position.z]|min`
+- `SAVE_GCODE_STATE NAME=vo_cancel_park_state`
+- `{% if 'z' in th.homed_axes and drop > 0 %}`
+- `G91`
+- `G1 Z{drop}`
+- `{% endif %}`
+- `{% if 'x' in th.homed_axes and 'y' in th.homed_axes %}`
+- `_VO_CHUTE_APPROACH`
+- `{% endif %}`
+- `RESTORE_GCODE_STATE NAME=vo_cancel_park_state`
+
+Forbidden patterns:
+
+- `G28`
+- `_HOME_STATE`
+- `SAFE_Z_MOVE`
+- `MOVE_TO_TRASH`
+- `G1 E`
+- `G1 X`
+- `G1 Y`
+- `VO_WIPE_NOZZLE_DROP`
+- `CUT_FILAMENT`
+
+### chute_approach_moves_only
+
+Condition: `the cancel's move to the chute, and every other move to the chute after X and Y are homed`
+
+Source: `installer/klipper/printers/max4/nozzle_motion.cfg:157-180`
+
+Direct visible macro calls in branch slice:
+
+- `save_gcode_state`
+- `restore_gcode_state`
+
+Ordered invariants:
+
+- `SAVE_GCODE_STATE NAME=vo_chute_approach_state`
+- `G90`
+- `M204 S10000`
+- `SET_VELOCITY_LIMIT ACCEL={saved_accel}`
+- `RESTORE_GCODE_STATE NAME=vo_chute_approach_state`
+
+Forbidden patterns:
+
+- `G28`
+- `F3500`
+- `G1 E`
+- `G1 Z`
+- `_VO_CUTTER_STRIKE`
+- `_VO_WIPE_NOZZLE`
+
 ### cancel_cooldown_without_waiting
 
 Condition: `the nozzle is at or above 170C when the print is stopped`
 
-Source: `installer/klipper/macros/cancel.cfg:68-79`
+Source: `installer/klipper/macros/cancel.cfg:91-102`
 
 Direct visible macro calls in branch slice:
 
