@@ -223,3 +223,28 @@
 .card-fold .chev.open { transform: rotate(90deg); }
 .card-fold:hover .chev { color: var(--ink); }
 .card.folded .card-title { margin-bottom: 0 !important; }
+
+/* ---- Fans and lights ---- */
+.oc-card { container-type: inline-size; }
+.oc-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.oc-quick .choice { min-height: 30px; padding: 0 12px 0 10px; font-size: 12.5px; }
+/* Both tabs in one cell: the card keeps the taller one's height, so switching tabs never moves the page. */
+.oc-panes { display: grid; }
+.oc-panes > * { grid-area: 1 / 1; min-width: 0; }
+.oc-panes > .oc-hidden { visibility: hidden; }
+.oc-auto { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 12px; font-size: 12px; }
+.oc-light + .oc-light { border-top: 1px solid var(--line); padding-top: 12px; }
+.oc-row { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; gap: 10px; }
+.oc-row > .section-label { font-size: 10.5px; }
+.oc-fxs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+@container (max-width: 300px) { .oc-fxs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.oc-fx { display: grid; gap: 5px; min-width: 0; padding: 6px 6px 5px; border: 0; border-radius: 9px; background: var(--inset); box-shadow: inset 0 0 0 1px var(--line);
+  text-align: left; font-size: 11.5px; font-weight: 650; color: var(--ink-2); }
+.oc-fx > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oc-fx:hover { background: var(--hover-2); }
+.oc-fx.on { background: var(--accent-tint); color: var(--accent-ink); box-shadow: inset 0 0 0 1.5px var(--accent); }
+/* A light's LEDs, lit by the effect preview. */
+.led-strip { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; border-radius: 7px; background: var(--page); box-shadow: inset 0 0 0 1px var(--line); }
+.led-strip > i { display: block; height: 12px; border-radius: 2px; background: var(--inset); }
+.led-strip.mini { gap: 1.5px; padding: 2px; border-radius: 4px; }
+.led-strip.mini > i { height: 6px; border-radius: 1.5px; }

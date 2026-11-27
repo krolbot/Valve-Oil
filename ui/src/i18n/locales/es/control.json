@@ -160,7 +160,8 @@
     "brightness": "Brillo",
     "brightness_named": "Brillo de {{name}}",
     "white": "Blanco",
-    "white_named": "Blanco de {{name}}"
+    "white_named": "Blanco de {{name}}",
+    "presets_named": "Valores rápidos de {{name}}"
   },
   "macros": {
     "all_hidden": "Todas las macros están ocultas. Usa Organizar para mostrar algunas.",

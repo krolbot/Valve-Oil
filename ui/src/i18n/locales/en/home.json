@@ -139,5 +139,28 @@
     "power": "{{pct}}% power",
     "target_hint": "Type a {{name}} target and press Enter. 0 turns it off.",
     "fan_title": "{{name}}: fan {{pct}}%, target {{target}}°"
+  },
+  "outputs": {
+    "tab_fans": "Fans",
+    "tab_lights": "Light control",
+    "fans_off": "Fans off",
+    "klipper_runs": "Klipper runs these",
+    "case_light": "Case light",
+    "effect_named": "{{name}} effect",
+    "effect_status": "Printer status",
+    "effect_solid": "Solid",
+    "effect_breathe": "Breathe",
+    "effect_flow": "Flow",
+    "effect_rainbow": "Rainbow",
+    "effect_comet": "Comet",
+    "effect_spread": "Spread",
+    "effect_flash": "Flash",
+    "status_note": "QIDI's own status light. It breathes while idle and fills with the print's progress. Another effect replaces it until you pick Printer status again.",
+    "color": "Color",
+    "speed": "Speed",
+    "speed_slow": "Slow",
+    "speed_normal": "Normal",
+    "speed_fast": "Fast",
+    "reverse": "Reverse"
   }
 }

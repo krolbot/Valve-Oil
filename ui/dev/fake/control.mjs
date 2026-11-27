@@ -36,7 +36,11 @@ const MACROS = {
   SET_PAUSE_AT_LAYER: { description: 'Enable/disable a pause if a given layer number is reached', gcode: '{% set layer = params.LAYER|default(0)|int %}\n{% set macro = params.MACRO|default("PAUSE") %}' },
   M106: { description: 'Sets a fan speed. P0 part cooling, P2 auxiliary, P3 exhaust, P4 polar cooler.', gcode: '{% set p = params.P|default(0)|int %}' },
   _CLIENT_HELPER: { description: 'G-Code macro', gcode: '' },
+  VO_LIGHT_EFFECT: { description: "Sets the RGB light's effect", gcode: 'NEOPIXEL_MODE M=1' },
 }
+// VO_LIGHT_EFFECT's variables as Klipper starts them: QIDI's status light.
+const LIGHT_START = { effect: 'status', last_effect: 'status', red: 255, green: 255, blue: 255, brightness: 100, speed: 'normal', direction: 1 }
+const LIGHT_EFFECTS = ['status', 'off', 'solid', 'breathe', 'flow', 'rainbow', 'comet', 'spread', 'flash']
 
 export function install(fake) {
   const { set, pushConsole } = fake
@@ -58,7 +62,7 @@ export function install(fake) {
       'controller_fan board_fan': { speed: 1, rpm: 6100 },
       'output_pin beeper': { value: 0 },
       'output_pin polar_cooler': { value: 0 },
-      'neopixel RGB': { color_data: [0, 1, 2].map(() => [0, 0, 0, 0]) },
+      'neopixel RGB': { color_data: Array.from({ length: 25 }, () => [0, 0, 0, 0]) },
       'temperature_sensor Chamber_Thermal_Protection_Sensor': { temperature: 31.4, measured_min_temp: 24.1, measured_max_temp: 47.9 },
       'temperature_sensor Toolhead_MCU': { temperature: 44.2, measured_min_temp: 30.5, measured_max_temp: 51.2 },
       manual_probe: { is_active: false, z_position: null, z_position_lower: null, z_position_upper: null },
@@ -71,6 +75,7 @@ export function install(fake) {
     Object.assign(s.gcode_move, { absolute_coordinates: true, absolute_extrude: false })
     s.motion_report.live_position = [...s.toolhead.position]
     for (const [name] of Object.entries(MACROS)) s[`gcode_macro ${name}`] = {}
+    s['gcode_macro VO_LIGHT_EFFECT'] = { ...LIGHT_START }
     s['gcode_macro SET_PRINT_STATS_INFO'] = { pause_next_layer: { enable: false, call: 'PAUSE' }, pause_at_layer: { enable: false, call: 'PAUSE', layer: 0 } }
     if (scenario === 'printing') {
       s.exclude_object = {
@@ -99,7 +104,7 @@ export function install(fake) {
     'output_pin caselight': { pwm: false, value: 1, shutdown_value: 0 },
     'output_pin beeper': { pwm: false, value: 0, shutdown_value: 0 },
     'output_pin polar_cooler': { pwm: false, value: 0, shutdown_value: 0 },
-    'neopixel rgb': { chain_count: 3, color_order: ['GRB'], initial_red: 0, initial_green: 0, initial_blue: 0 },
+    'neopixel rgb': { chain_count: 25, color_order: ['GRB'], initial_red: 0, initial_green: 0, initial_blue: 0 },
     'filament_switch_sensor filament_switch_sensor': { pause_on_runout: false, runout_gcode: '\nVO_FILAMENT_SENSOR_RUNOUT', insert_gcode: '\nVO_FILAMENT_SENSOR_INSERTED' },
     stepper_z: { position_min: -5, position_max: 342 },
     z_tilt: { retries: 5, retry_tolerance: 0.0075 },
@@ -117,6 +122,9 @@ export function install(fake) {
     SET_FAN_SPEED: 'Sets the speed of a fan',
     SET_PIN: 'Set the value of an output pin',
     SET_LED: 'Set the color of an LED',
+    NEOPIXEL_MODE: 'Sets a light mode',
+    NEOPIXEL_ENABLE: 'Turns the automatic light modes on or off',
+    VO_LIGHT_EFFECT: "Sets the RGB light's effect",
     PID_CALIBRATE: 'Run PID calibration test',
     TURN_OFF_HEATERS: 'Turn off all heaters',
     EXCLUDE_OBJECT: 'Cancel moves inside a specified objects',
@@ -174,6 +182,25 @@ export function install(fake) {
         if (!cur) throw fake.rpcError(`Unknown LED '${p.LED}'`)
         const c = [Number(p.RED ?? 0), Number(p.GREEN ?? 0), Number(p.BLUE ?? 0), Number(p.WHITE ?? 0)]
         set(`neopixel ${p.LED}`, { color_data: cur.color_data.map(() => c) })
+        return true
+      }
+      case 'VO_LIGHT_EFFECT': {
+        // As installer/klipper/macros/lights.cfg keeps its variables.
+        const cur = s['gcode_macro VO_LIGHT_EFFECT']
+        let effect = (p.EFFECT ?? cur.effect).toLowerCase()
+        if (effect === 'on') effect = cur.last_effect
+        if (!LIGHT_EFFECTS.includes(effect)) throw fake.rpcError(`VO_LIGHT_EFFECT: unknown effect ${effect}`)
+        const byte = (v, d) => Math.max(0, Math.min(255, Math.round(Number(v ?? d))))
+        set('gcode_macro VO_LIGHT_EFFECT', {
+          effect,
+          last_effect: effect === 'off' ? cur.last_effect : effect,
+          red: byte(p.RED, cur.red),
+          green: byte(p.GREEN, cur.green),
+          blue: byte(p.BLUE, cur.blue),
+          brightness: Math.max(0, Math.min(100, Math.round(Number(p.BRIGHTNESS ?? cur.brightness)))),
+          speed: (p.SPEED ?? cur.speed).toLowerCase(),
+          direction: Number(p.DIRECTION ?? cur.direction) ? 1 : 0,
+        })
         return true
       }
       case 'SET_VELOCITY_LIMIT': {

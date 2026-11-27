@@ -83,23 +83,30 @@ function FansCard() {
   )
 }
 
+const FAN_PRESETS = [0, 25, 50, 75, 100]
+
+/** The G-code that sets a fan Valve Oil UI can set (`fan` or `fan_generic`) to `pct` percent. */
+export function fanSpeedGcode(obj: string, pct: number, hasM106Macro: boolean) {
+  const name = nameOf(obj)
+  if (typeOf(obj) === 'fan') return gcode`M106 S${Math.ceil(pct * 2.55)}`
+  // QIDI's chamber exhaust goes through the printer's M106 macro, which tells the chamber guard and warns when it
+  // fights a chamber target.
+  if (name === 'chamber_circulation_fan' && hasM106Macro) return gcode`M106 P3 S${Math.ceil(pct * 2.55)}`
+  return gcode`SET_FAN_SPEED FAN=${encodeGcodeParamValue(name)} SPEED=${pct / 100}`
+}
+
 export function FanRow({ obj, inline }: { obj: string; inline?: boolean }) {
   const st = usePrinter((s) => s.status[obj] ?? {})
   const cfg = usePrinter((s) => s.settings[obj.toLowerCase()] ?? {})
   const hasM106Macro = usePrinter((s) => s.objects.includes('gcode_macro M106'))
   const type = typeOf(obj)
-  const name = nameOf(obj)
   const controllable = type === 'fan' || type === 'fan_generic'
   const value = Math.round((((st.speed as number | undefined) ?? 0) / ((cfg.max_power as number | undefined) || 1)) * 100)
   const rpm = typeof st.rpm === 'number' && st.rpm > 0 ? t('control.outputs.rpm', { rpm: st.rpm.toFixed(0) }) : null
   const offBelow = ((cfg.off_below as number | undefined) ?? 0) * 100
   const set = (pct: number) => {
     if (offBelow && pct > 0 && pct < offBelow) pct = offBelow
-    if (type === 'fan') return send(gcode`M106 S${Math.ceil(pct * 2.55)}`)
-    // QIDI's chamber exhaust goes through the printer's M106 macro, which tells the chamber guard and warns when it
-    // fights a chamber target.
-    if (name === 'chamber_circulation_fan' && hasM106Macro) return send(gcode`M106 P3 S${Math.ceil(pct * 2.55)}`)
-    send(gcode`SET_FAN_SPEED FAN=${encodeGcodeParamValue(name)} SPEED=${pct / 100}`)
+    send(fanSpeedGcode(obj, pct, hasM106Macro))
   }
   if (inline && controllable)
     return (
@@ -108,7 +115,7 @@ export function FanRow({ obj, inline }: { obj: string; inline?: boolean }) {
           <span className="block truncate font-semibold">{fanLabel(obj)}</span>
           {rpm && <span className="num block text-[11px] text-ink-3">{rpm}</span>}
         </span>
-        <Slider label={fanLabel(obj)} value={value} onCommit={set} format={percentOrOff} />
+        <Slider label={fanLabel(obj)} value={value} onCommit={set} format={percentOrOff} presets={FAN_PRESETS} />
       </div>
     )
   return (
